@@ -1219,20 +1219,21 @@ const demoData = {
 (async function init() {
   if (DEMO_MODE) { loadDemoMode(); return; }
 
-  // 1) Écouter les changements futurs (reconnexion, refresh token, logout)
   sb.auth.onAuthStateChange(async (event, session) => {
-    // Ignorer INITIAL_SESSION — on le gère manuellement en dessous
     if (event === 'INITIAL_SESSION') return;
     state.session = session;
     if (session) await loadUserContext(session);
     else showAuthScreen();
   });
 
-  // 2) Charger la session existante immédiatement
   const { data:{ session } } = await sb.auth.getSession();
   state.session = session;
-  if (session) await loadUserContext(session);
-  else showAuthScreen();
+  if (session) {
+    console.log('Session existante trouvée, chargement...');
+    await loadUserContext(session);
+  } else {
+    showAuthScreen();
+  }
 })();
 
 function loadDemoMode() {
@@ -1261,32 +1262,43 @@ function loadDemoMode() {
 
 async function loadUserContext(session) {
   try {
-    // ✅ FIX 1: maybeSingle() au lieu de single()
-    // single() plante si 0 résultat → maybeSingle() retourne null proprement
-    const { data:adminData } = await sb.from('super_admins').select('*').eq('auth_id',session.user.id).maybeSingle();
+    console.log('loadUserContext: auth_id =', session.user.id);
+
+    const { data:adminData, error:adminError } = await sb.from('super_admins').select('*').eq('auth_id', session.user.id).maybeSingle();
+    console.log('super_admins check:', { adminData, adminError });
     if (adminData) {
       state.isSuperAdmin = true;
       state.currentUser = { firstname:'Super', lastname:'Admin', email:session.user.email, role:'superadmin' };
       showAdminPanel(); await loadAdminData(); return;
     }
 
-    // ✅ FIX 2: maybeSingle() au lieu de single()
-    const { data:userData, error:userError } = await sb.from('users').select('*, clubs(*)').eq('auth_id',session.user.id).maybeSingle();
+    const { data:userData, error:userError } = await sb.from('users').select('*, clubs(*)').eq('auth_id', session.user.id).maybeSingle();
+    console.log('users check:', { userData, userError });
 
-    // ✅ FIX 3: Ne PAS faire doLogout() automatiquement (boucle infinie)
     if (userError || !userData) {
       console.error('Profil introuvable:', userError);
-      toast('Profil introuvable — contactez le support','error');
+      // Montrer l'erreur SUR l'écran de login (visible)
+      showAuthScreen();
+      showAuthError('Profil introuvable — contactez le support. (auth_id: ' + session.user.id + ')');
       return;
     }
 
     state.currentUser = userData;
     state.currentClub = userData.clubs;
-    await Promise.all([loadStages(),loadTeam(),loadProspects(),loadRDVs(),loadAutomations(),loadActivity()]);
+
+    if (!state.currentClub) {
+      console.error('Club introuvable pour cet utilisateur');
+      showAuthScreen();
+      showAuthError('Club introuvable — contactez le support.');
+      return;
+    }
+
+    await Promise.all([loadStages(), loadTeam(), loadProspects(), loadRDVs(), loadAutomations(), loadActivity()]);
     showApp();
   } catch(err) {
-    console.error('loadUserContext error:', err);
-    toast('Erreur de chargement: ' + err.message,'error');
+    console.error('loadUserContext CRASH:', err);
+    showAuthScreen();
+    showAuthError('Erreur de chargement: ' + err.message);
   }
 }
 
