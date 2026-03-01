@@ -1,0 +1,2371 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ironCRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;600;700&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* ══════════════════════════════════════════════════════
+   IRONCRM — DESIGN SYSTEM
+══════════════════════════════════════════════════════ */
+:root {
+  --iron: #0d0d0f; --forge: #141418; --steel: #1a1a22; --plate: #22222e;
+  --ember: #ff4c00; --ember-dim: rgba(255,76,0,0.12);
+  --gold: #c8943a; --green: #22c55e; --blue: #3b82f6; --yellow: #eab308;
+  --ash: #6b6b7a; --muted: #9999aa; --light: #dddde8; --white: #f0f0f5;
+  --border: rgba(255,255,255,0.07); --border-ember: rgba(255,76,0,0.25);
+  --sidebar-w: 220px; --topbar-h: 60px; --bottom-nav-h: 60px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; }
+body { font-family:'Barlow',sans-serif; font-weight:400; background:var(--iron); color:var(--light); font-size:14px; overflow:hidden; }
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--plate); border-radius:3px; }
+
+/* ── LAYOUT ── */
+#app-shell { display:flex; height:100vh; }
+#app-shell.hidden { display:none; }
+
+/* ── SIDEBAR ── */
+#sidebar {
+  width:var(--sidebar-w); background:var(--forge); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; flex-shrink:0; position:relative; z-index:50;
+}
+.sidebar-logo {
+  height:var(--topbar-h); display:flex; align-items:center; padding:0 20px;
+  border-bottom:1px solid var(--border); font-family:'Bebas Neue',sans-serif;
+  font-size:24px; letter-spacing:3px; color:var(--white); flex-shrink:0;
+}
+.sidebar-logo span { color:var(--ember); }
+.sidebar-logo sub { font-size:10px; letter-spacing:1px; color:var(--ash); font-family:'Barlow Condensed',sans-serif; margin-left:6px; font-weight:600; align-self:flex-end; margin-bottom:6px; text-transform:uppercase; }
+.sidebar-nav { flex:1; overflow-y:auto; padding:12px 0; }
+.nav-section { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--ash); font-weight:700; padding:14px 20px 6px; font-family:'Barlow Condensed',sans-serif; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:10px 20px; cursor:pointer; color:var(--muted); transition:all 0.15s; font-size:13px; font-weight:600; position:relative; letter-spacing:0.3px; }
+.nav-item:hover { color:var(--light); background:rgba(255,255,255,0.03); }
+.nav-item.active { color:var(--ember); background:var(--ember-dim); }
+.nav-item.active::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--ember); }
+.nav-item .icon { font-size:16px; flex-shrink:0; }
+.nav-badge { margin-left:auto; background:var(--ember); color:white; font-size:10px; font-weight:700; padding:1px 6px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; }
+.sidebar-footer { border-top:1px solid var(--border); padding:14px 20px; }
+.user-card { display:flex; align-items:center; gap:10px; cursor:pointer; padding:8px 0; }
+.avatar { width:32px; height:32px; background:var(--ember); display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:16px; color:white; flex-shrink:0; }
+.user-info { flex:1; overflow:hidden; }
+.user-name { font-size:13px; font-weight:600; color:var(--light); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.user-role { font-size:11px; color:var(--ash); }
+.club-badge { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--ember); font-weight:700; font-family:'Barlow Condensed',sans-serif; padding:4px 0 8px; border-bottom:1px solid var(--border); margin-bottom:8px; }
+
+/* ── MAIN ── */
+#main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+#topbar { height:var(--topbar-h); background:var(--forge); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 28px; gap:14px; flex-shrink:0; }
+.topbar-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; color:var(--white); flex:1; }
+.search-box { display:flex; align-items:center; gap:8px; background:var(--steel); border:1px solid var(--border); padding:8px 14px; width:240px; transition:border-color 0.2s; }
+.search-box:focus-within { border-color:var(--border-ember); }
+.search-box input { background:none; border:none; outline:none; color:var(--light); font-family:'Barlow',sans-serif; font-size:13px; width:100%; }
+.search-box input::placeholder { color:var(--ash); }
+#content { flex:1; overflow-y:auto; overflow-x:hidden; }
+.page { display:none; padding:24px 28px; }
+.page.active { display:block; }
+
+/* ── BUTTONS ── */
+.btn { display:inline-flex; align-items:center; gap:7px; padding:9px 18px; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; border:none; transition:all 0.18s; white-space:nowrap; }
+.btn-primary { background:var(--ember); color:white; }
+.btn-primary:hover { background:#ff6a2f; transform:translateY(-1px); }
+.btn-ghost { background:var(--steel); color:var(--muted); border:1px solid var(--border); }
+.btn-ghost:hover { color:var(--light); border-color:rgba(255,255,255,0.15); }
+.btn-danger { background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.25); }
+.btn-danger:hover { background:rgba(239,68,68,0.25); }
+.btn-sm { padding:6px 12px; font-size:11px; }
+.btn-icon { padding:8px 10px; }
+.btn:disabled { opacity:0.5; cursor:not-allowed; transform:none !important; }
+
+/* ── CARDS ── */
+.card { background:var(--forge); border:1px solid var(--border); padding:20px 24px; }
+.card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.card-title { font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:2px; text-transform:uppercase; font-weight:700; color:var(--muted); }
+
+/* ── GRIDS ── */
+.kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
+.kpi-card { background:var(--forge); border:1px solid var(--border); padding:20px 22px; position:relative; overflow:hidden; cursor:default; transition:border-color 0.2s; }
+.kpi-card:hover { border-color:var(--border-ember); }
+.kpi-card::after { content:''; position:absolute; bottom:0; left:0; right:0; height:2px; background:var(--ember); transform:scaleX(0); transition:transform 0.3s; }
+.kpi-card:hover::after { transform:scaleX(1); }
+.kpi-label { font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--ash); font-weight:600; margin-bottom:8px; font-family:'Barlow Condensed',sans-serif; }
+.kpi-value { font-family:'Bebas Neue',sans-serif; font-size:42px; color:var(--white); line-height:1; margin-bottom:4px; }
+.kpi-delta { font-size:12px; font-weight:600; }
+.kpi-delta.up { color:var(--green); }
+.kpi-delta.down { color:#f87171; }
+.kpi-icon { position:absolute; top:16px; right:16px; font-size:28px; opacity:0.15; }
+.dash-grid { display:grid; grid-template-columns:1.6fr 1fr; gap:14px; margin-bottom:14px; }
+
+/* ── CHARTS ── */
+.chart-area { height:150px; display:flex; align-items:flex-end; gap:8px; padding-top:8px; }
+.chart-bar-group { flex:1; display:flex; align-items:flex-end; gap:3px; }
+.c-bar { flex:1; min-width:8px; transition:opacity 0.2s; cursor:default; }
+.c-bar:hover { opacity:0.8; }
+.chart-labels { display:flex; gap:8px; margin-top:6px; }
+.chart-label { flex:1; font-size:10px; color:var(--ash); text-align:center; font-family:'Barlow Condensed',sans-serif; font-weight:600; letter-spacing:1px; }
+.legend { display:flex; gap:16px; margin-bottom:12px; flex-wrap:wrap; }
+.legend-item { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); font-family:'Barlow Condensed',sans-serif; font-weight:600; letter-spacing:1px; text-transform:uppercase; }
+.legend-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+/* ── FUNNEL ── */
+.funnel { display:flex; flex-direction:column; gap:10px; }
+.funnel-row { display:flex; align-items:center; gap:12px; }
+.funnel-label { font-size:12px; color:var(--muted); width:100px; flex-shrink:0; }
+.funnel-bar-wrap { flex:1; background:var(--steel); height:22px; overflow:hidden; }
+.funnel-bar { height:100%; background:var(--ember); display:flex; align-items:center; justify-content:flex-end; padding-right:8px; transition:width 0.8s ease; }
+.funnel-pct { font-size:10px; font-weight:700; color:white; font-family:'Barlow Condensed',sans-serif; }
+.funnel-count { font-size:12px; color:var(--ash); width:40px; text-align:right; }
+
+/* ── ACTIVITY ── */
+.activity-list { display:flex; flex-direction:column; }
+.activity-item { display:flex; align-items:flex-start; gap:12px; padding:11px 0; border-bottom:1px solid var(--border); }
+.activity-item:last-child { border-bottom:none; }
+.act-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:4px; }
+.act-text { flex:1; font-size:13px; line-height:1.5; color:var(--muted); }
+.act-text strong { color:var(--light); }
+.act-time { font-size:11px; color:var(--ash); flex-shrink:0; }
+
+/* ── KANBAN ── */
+.kanban-wrap { display:flex; gap:14px; overflow-x:auto; padding-bottom:14px; min-height:calc(100vh - 200px); }
+.kanban-col { flex-shrink:0; width:275px; display:flex; flex-direction:column; gap:8px; }
+.kanban-col-header { background:var(--forge); border:1px solid var(--border); padding:12px 16px; display:flex; align-items:center; justify-content:space-between; }
+.col-name { font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; display:flex; align-items:center; gap:8px; }
+.col-dot { width:8px; height:8px; border-radius:50%; }
+.col-count { font-size:11px; color:var(--ash); background:var(--steel); padding:2px 8px; font-weight:600; font-family:'Barlow Condensed',sans-serif; }
+.kanban-cards { display:flex; flex-direction:column; gap:8px; flex:1; min-height:60px; }
+.k-card { background:var(--forge); border:1px solid var(--border); padding:14px 16px; cursor:pointer; transition:all 0.18s; position:relative; overflow:hidden; }
+.k-card:hover { border-color:var(--border-ember); transform:translateY(-1px); box-shadow:0 4px 20px rgba(0,0,0,0.3); }
+.k-card-name { font-weight:600; color:var(--white); font-size:14px; margin-bottom:3px; }
+.k-card-meta { font-size:12px; color:var(--ash); margin-bottom:8px; }
+.k-card-tags { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:8px; }
+.k-card-foot { display:flex; align-items:center; justify-content:space-between; }
+.score-bar { flex:1; height:3px; background:var(--steel); margin-right:10px; overflow:hidden; }
+.score-fill { height:100%; background:var(--ember); }
+.k-card-date { font-size:11px; color:var(--ash); }
+.add-col-btn { background:var(--steel); border:1px dashed rgba(255,255,255,0.1); padding:10px; text-align:center; font-size:12px; color:var(--ash); cursor:pointer; transition:all 0.2s; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; text-transform:uppercase; font-weight:600; }
+.add-col-btn:hover { border-color:var(--border-ember); color:var(--ember); background:var(--ember-dim); }
+
+/* ── TAGS ── */
+.tag { font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:2px 7px; font-family:'Barlow Condensed',sans-serif; }
+.tag-ember { background:rgba(255,76,0,0.15); color:var(--ember); }
+.tag-green { background:rgba(34,197,94,0.12); color:var(--green); }
+.tag-blue { background:rgba(59,130,246,0.12); color:var(--blue); }
+.tag-gold { background:rgba(200,148,58,0.15); color:var(--gold); }
+.tag-gray { background:rgba(255,255,255,0.06); color:var(--muted); }
+.tag-red { background:rgba(239,68,68,0.12); color:#f87171; }
+
+/* ── TABLE ── */
+.table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+table { width:100%; border-collapse:collapse; }
+thead th { background:var(--steel); padding:10px 14px; text-align:left; font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--ash); border-bottom:1px solid var(--border); white-space:nowrap; cursor:pointer; user-select:none; }
+thead th:hover { color:var(--light); }
+tbody tr { border-bottom:1px solid var(--border); transition:background 0.13s; cursor:pointer; }
+tbody tr:hover { background:rgba(255,255,255,0.02); }
+tbody td { padding:11px 14px; font-size:13px; }
+
+/* ── PROSPECT DETAIL ── */
+.prospect-detail { display:grid; grid-template-columns:380px 1fr; gap:14px; }
+.prospect-header { background:var(--forge); border:1px solid var(--border); padding:24px; display:flex; align-items:flex-start; gap:16px; }
+.prospect-avatar { width:56px; height:56px; background:var(--ember); display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:26px; color:white; flex-shrink:0; }
+.prospect-name-block h2 { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:2px; color:var(--white); }
+.score-big { margin-left:auto; text-align:center; }
+.score-big-num { font-family:'Bebas Neue',sans-serif; font-size:48px; color:var(--ember); line-height:1; }
+.score-big-label { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--ash); font-weight:600; font-family:'Barlow Condensed',sans-serif; }
+.info-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.info-label { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--ash); font-weight:700; font-family:'Barlow Condensed',sans-serif; margin-bottom:4px; }
+.info-value { font-size:13px; color:var(--light); }
+.timeline { display:flex; flex-direction:column; gap:0; }
+.tl-item { display:flex; gap:14px; padding-bottom:18px; position:relative; }
+.tl-item:not(:last-child)::before { content:''; position:absolute; left:14px; top:30px; bottom:0; width:1px; background:var(--border); }
+.tl-dot { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; }
+.tl-content { flex:1; padding-top:2px; }
+.tl-title { font-size:13px; font-weight:600; color:var(--light); margin-bottom:2px; }
+.tl-text { font-size:12px; color:var(--ash); line-height:1.5; }
+.tl-time { font-size:11px; color:var(--ash); margin-top:3px; }
+.note-input-wrap { display:flex; gap:8px; margin-bottom:14px; }
+.note-input { flex:1; background:var(--steel); border:1px solid var(--border); color:var(--light); padding:10px 14px; font-family:'Barlow',sans-serif; font-size:13px; outline:none; resize:none; height:42px; transition:border-color 0.2s; }
+.note-input:focus { border-color:var(--border-ember); }
+
+/* ── AUTOMATIONS ── */
+.auto-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.auto-card { background:var(--forge); border:1px solid var(--border); padding:20px 22px; transition:border-color 0.2s; position:relative; overflow:hidden; }
+.auto-card:hover { border-color:var(--border-ember); }
+.auto-card.enabled::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--ember); }
+.toggle { width:36px; height:20px; background:var(--steel); border:1px solid var(--border); cursor:pointer; position:relative; transition:all 0.2s; flex-shrink:0; }
+.toggle.on { background:var(--ember); border-color:var(--ember); }
+.toggle::after { content:''; position:absolute; top:3px; left:3px; width:12px; height:12px; background:var(--ash); transition:all 0.2s; }
+.toggle.on::after { left:19px; background:white; }
+
+/* ── CALENDAR ── */
+.calendar-grid { display:grid; grid-template-columns:1fr 320px; gap:14px; }
+.cal-wrap { background:var(--forge); border:1px solid var(--border); padding:20px; }
+.cal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.cal-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; color:var(--white); }
+.cal-nav { display:flex; gap:4px; }
+.cal-nav button { background:var(--steel); border:1px solid var(--border); color:var(--muted); padding:6px 10px; cursor:pointer; font-size:14px; transition:all 0.15s; }
+.cal-nav button:hover { color:var(--white); }
+.cal-days-header { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; margin-bottom:4px; }
+.cal-day-name { font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--ash); text-align:center; padding:6px; font-family:'Barlow Condensed',sans-serif; }
+.cal-days { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+.cal-day { aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding:6px 4px; cursor:pointer; transition:all 0.15s; background:var(--steel); font-size:13px; color:var(--muted); }
+.cal-day:hover { background:var(--plate); color:var(--white); }
+.cal-day.today { background:var(--ember-dim); color:var(--ember); font-weight:700; border:1px solid var(--border-ember); }
+.cal-day.other-month { opacity:0.3; }
+.cal-day.selected { background:var(--ember); color:white; }
+.cal-event-dot { width:5px; height:5px; border-radius:50%; background:var(--ember); margin-top:3px; }
+.rdv-list { display:flex; flex-direction:column; gap:8px; }
+.rdv-item { background:var(--forge); border:1px solid var(--border); border-left:3px solid var(--ember); padding:12px 14px; cursor:pointer; transition:all 0.15s; }
+.rdv-item:hover { background:var(--steel); }
+.rdv-time { font-family:'Bebas Neue',sans-serif; font-size:18px; color:var(--ember); margin-bottom:2px; }
+.rdv-name { font-weight:600; color:var(--white); font-size:13px; }
+.rdv-meta { font-size:12px; color:var(--ash); }
+
+/* ── ANALYTICS ── */
+.analytics-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+.progress-cell { display:flex; align-items:center; gap:8px; }
+.progress-bar { flex:1; height:6px; background:var(--steel); overflow:hidden; }
+.progress-fill { height:100%; background:var(--ember); }
+
+/* ── MODALS ── */
+.modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:200; backdrop-filter:blur(3px); align-items:center; justify-content:center; }
+.modal-backdrop.open { display:flex; }
+.modal { background:var(--forge); border:1px solid var(--border); width:100%; max-width:580px; max-height:90vh; overflow-y:auto; animation:modalIn 0.2s ease; }
+@keyframes modalIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+.modal-header { display:flex; align-items:center; justify-content:space-between; padding:18px 24px; border-bottom:1px solid var(--border); background:var(--steel); position:sticky; top:0; z-index:1; }
+.modal-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; color:var(--white); }
+.modal-close { background:none; border:none; color:var(--ash); font-size:20px; cursor:pointer; padding:4px 8px; transition:color 0.15s; }
+.modal-close:hover { color:var(--white); }
+.modal-body { padding:24px; }
+.modal-footer { padding:16px 24px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:8px; }
+
+/* ── FORMS ── */
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+.form-full { margin-bottom:14px; }
+.form-group { display:flex; flex-direction:column; gap:5px; }
+.form-label { font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--ash); font-family:'Barlow Condensed',sans-serif; }
+.form-input,.form-select,.form-textarea { background:var(--steel); border:1px solid var(--border); color:var(--light); padding:10px 14px; font-family:'Barlow',sans-serif; font-size:13px; outline:none; transition:border-color 0.2s; width:100%; }
+.form-select { cursor:pointer; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M0 0l6 8 6-8' fill='%236b6b7a'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:32px; }
+.form-textarea { resize:vertical; min-height:80px; }
+.form-input:focus,.form-select:focus,.form-textarea:focus { border-color:var(--border-ember); }
+.form-input::placeholder,.form-textarea::placeholder { color:var(--ash); }
+.form-hint { font-size:11px; color:var(--ash); margin-top:3px; }
+
+/* ── SETTINGS ── */
+.settings-grid { display:grid; grid-template-columns:220px 1fr; gap:14px; }
+.settings-nav { display:flex; flex-direction:column; background:var(--forge); border:1px solid var(--border); }
+.settings-nav-item { padding:12px 18px; font-size:13px; font-weight:600; color:var(--muted); cursor:pointer; transition:all 0.15s; border-bottom:1px solid var(--border); }
+.settings-nav-item:last-child { border-bottom:none; }
+.settings-nav-item:hover { color:var(--light); }
+.settings-nav-item.active { color:var(--ember); background:var(--ember-dim); border-left:3px solid var(--ember); }
+.settings-panel { display:none; }
+.settings-panel.active { display:block; }
+.settings-section { background:var(--forge); border:1px solid var(--border); padding:24px; margin-bottom:14px; }
+.settings-section-title { font-family:'Barlow Condensed',sans-serif; font-size:16px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--white); margin-bottom:20px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+
+/* ── PILL TABS ── */
+.pill-tabs { display:flex; background:var(--steel); padding:3px; margin-bottom:20px; align-self:flex-start; overflow-x:auto; }
+.pill-tab { padding:8px 18px; font-size:12px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; font-family:'Barlow Condensed',sans-serif; cursor:pointer; color:var(--ash); transition:all 0.15s; white-space:nowrap; }
+.pill-tab.active { background:var(--ember); color:white; }
+
+/* ── IMPORT/EXPORT ── */
+.drop-zone { border:2px dashed var(--border); padding:40px; text-align:center; cursor:pointer; transition:all 0.2s; color:var(--ash); }
+.drop-zone:hover,.drop-zone.drag-over { border-color:var(--border-ember); color:var(--ember); background:var(--ember-dim); }
+.drop-zone-icon { font-size:40px; margin-bottom:10px; }
+
+/* ── TOASTS ── */
+.toast-wrap { position:fixed; bottom:24px; right:24px; z-index:400; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
+.toast { background:var(--forge); border:1px solid var(--border); border-left:3px solid var(--ember); padding:12px 16px; max-width:320px; font-size:13px; color:var(--light); animation:toastIn 0.25s ease,toastOut 0.25s ease 2.7s forwards; pointer-events:all; }
+.toast.success { border-left-color:var(--green); }
+.toast.error { border-left-color:#f87171; }
+.toast.info { border-left-color:var(--blue); }
+@keyframes toastIn { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+@keyframes toastOut { to{opacity:0;transform:translateX(20px)} }
+
+/* ── LOADER ── */
+.loader-wrap { display:flex; align-items:center; justify-content:center; padding:60px; flex-direction:column; gap:12px; }
+.spinner { width:32px; height:32px; border:3px solid var(--border); border-top-color:var(--ember); border-radius:50%; animation:spin 0.8s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+.loader-text { font-size:13px; color:var(--ash); font-family:'Barlow Condensed',sans-serif; letter-spacing:2px; text-transform:uppercase; }
+
+/* ══════════════════════════════════════════════════════
+   AUTH SCREENS
+══════════════════════════════════════════════════════ */
+#auth-screen {
+  display:none; position:fixed; inset:0; background:var(--iron); z-index:1000;
+  align-items:center; justify-content:center; overflow-y:auto; padding:20px;
+}
+#auth-screen.visible { display:flex; }
+
+.auth-container {
+  width:100%; max-width:420px;
+}
+.auth-logo {
+  text-align:center; margin-bottom:32px;
+  font-family:'Bebas Neue',sans-serif; font-size:40px; letter-spacing:5px; color:var(--white);
+}
+.auth-logo span { color:var(--ember); }
+.auth-logo p { font-family:'Barlow Condensed',sans-serif; font-size:12px; letter-spacing:3px; text-transform:uppercase; color:var(--ash); font-weight:600; margin-top:4px; }
+
+.auth-card { background:var(--forge); border:1px solid var(--border); padding:32px; }
+.auth-title { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:2px; color:var(--white); margin-bottom:6px; }
+.auth-subtitle { font-size:13px; color:var(--ash); margin-bottom:28px; line-height:1.5; }
+.auth-field { margin-bottom:16px; }
+.auth-label { font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--ash); font-family:'Barlow Condensed',sans-serif; display:block; margin-bottom:6px; }
+.auth-input { width:100%; background:var(--steel); border:1px solid var(--border); color:var(--light); padding:12px 16px; font-family:'Barlow',sans-serif; font-size:14px; outline:none; transition:border-color 0.2s; }
+.auth-input:focus { border-color:var(--border-ember); }
+.auth-input::placeholder { color:var(--ash); }
+.auth-btn { width:100%; background:var(--ember); color:white; border:none; padding:14px; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:3px; cursor:pointer; transition:all 0.18s; margin-top:8px; }
+.auth-btn:hover { background:#ff6a2f; }
+.auth-btn:disabled { opacity:0.6; cursor:not-allowed; }
+.auth-divider { text-align:center; margin:20px 0; font-size:12px; color:var(--ash); position:relative; }
+.auth-divider::before { content:''; position:absolute; top:50%; left:0; right:0; height:1px; background:var(--border); }
+.auth-divider span { background:var(--forge); padding:0 12px; position:relative; }
+.auth-link { text-align:center; margin-top:20px; font-size:13px; color:var(--ash); }
+.auth-link a { color:var(--ember); cursor:pointer; text-decoration:none; font-weight:600; }
+.auth-link a:hover { color:#ff6a2f; }
+.auth-error { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#f87171; padding:10px 14px; font-size:13px; margin-bottom:16px; display:none; }
+.auth-error.visible { display:block; }
+.auth-tabs { display:flex; margin-bottom:24px; background:var(--steel); padding:3px; }
+.auth-tab { flex:1; padding:9px; text-align:center; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; color:var(--ash); transition:all 0.15s; }
+.auth-tab.active { background:var(--ember); color:white; }
+
+/* Registration steps */
+.reg-steps { display:flex; gap:0; margin-bottom:28px; }
+.reg-step { flex:1; text-align:center; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; font-family:'Barlow Condensed',sans-serif; font-weight:700; padding:8px 4px; color:var(--ash); border-bottom:2px solid var(--border); }
+.reg-step.active { color:var(--ember); border-bottom-color:var(--ember); }
+.reg-step.done { color:var(--green); border-bottom-color:var(--green); }
+.reg-form-step { display:none; }
+.reg-form-step.active { display:block; }
+
+/* ══════════════════════════════════════════════════════
+   SUPER ADMIN PANEL
+══════════════════════════════════════════════════════ */
+#admin-panel { display:none; position:fixed; inset:0; background:var(--iron); z-index:900; flex-direction:column; overflow:hidden; }
+#admin-panel.visible { display:flex; }
+.admin-topbar { height:56px; background:var(--forge); border-bottom:1px solid var(--border-ember); display:flex; align-items:center; padding:0 28px; gap:16px; flex-shrink:0; }
+.admin-topbar-title { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:3px; color:var(--ember); }
+.admin-content { flex:1; overflow-y:auto; padding:28px; }
+.admin-kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+.clubs-table tbody tr:hover { background:rgba(255,76,0,0.04); }
+
+/* ══════════════════════════════════════════════════════
+   MOBILE RESPONSIVE
+══════════════════════════════════════════════════════ */
+/* Bottom nav */
+#bottom-nav { display:none; position:fixed; bottom:0; left:0; right:0; height:var(--bottom-nav-h); background:var(--forge); border-top:1px solid var(--border); z-index:100; justify-content:space-around; align-items:center; }
+.bottom-nav-item { display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; color:var(--ash); padding:6px 10px; transition:color 0.15s; flex:1; position:relative; }
+.bottom-nav-item.active { color:var(--ember); }
+.bnav-icon { font-size:20px; line-height:1; }
+.bnav-label { font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; font-family:'Barlow Condensed',sans-serif; }
+.bnav-badge { position:absolute; top:4px; right:calc(50% - 20px); background:var(--ember); color:white; font-size:9px; font-weight:700; width:15px; height:15px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; }
+
+/* Sidebar overlay */
+#sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:499; }
+#sidebar-overlay.show { display:block; }
+
+@media (max-width:1200px) {
+  :root { --sidebar-w:64px; }
+  .sidebar-logo sub,.nav-item span:not(.icon),.nav-badge,.user-info,.nav-section,.club-badge { display:none; }
+  .nav-item { justify-content:center; padding:14px 0; }
+  .sidebar-logo { justify-content:center; padding:0; font-size:20px; }
+  .sidebar-footer { padding:12px 0; }
+  .user-card { justify-content:center; }
+  .kpi-grid { grid-template-columns:repeat(2,1fr); }
+  .dash-grid { grid-template-columns:1fr; }
+  .analytics-row { grid-template-columns:1fr; }
+  .page { padding:16px; }
+  #topbar { padding:0 16px; gap:10px; }
+  .search-box { width:180px; }
+}
+
+@media (max-width:768px) {
+  :root { --topbar-h:56px; --sidebar-w:0px; }
+  body { overflow:hidden; }
+  #sidebar { display:none; }
+  #sidebar.mobile-open { display:flex; position:fixed; top:0; left:0; bottom:0; width:260px; z-index:500; --sidebar-w:260px; animation:drawerIn 0.22s ease; }
+  #sidebar.mobile-open .sidebar-logo sub,
+  #sidebar.mobile-open .nav-item span:not(.icon),
+  #sidebar.mobile-open .nav-badge,
+  #sidebar.mobile-open .user-info,
+  #sidebar.mobile-open .nav-section,
+  #sidebar.mobile-open .club-badge { display:revert; }
+  #sidebar.mobile-open .nav-item { justify-content:flex-start; padding:10px 20px; }
+  #sidebar.mobile-open .sidebar-logo { justify-content:flex-start; padding:0 20px; font-size:24px; letter-spacing:3px; }
+  #sidebar.mobile-open .sidebar-footer { padding:16px 20px; }
+  #sidebar.mobile-open .user-card { justify-content:flex-start; }
+  @keyframes drawerIn { from{transform:translateX(-100%);opacity:0} to{transform:translateX(0);opacity:1} }
+  #bottom-nav { display:flex !important; }
+  #main { width:100%; }
+  #topbar { padding:0 12px; gap:8px; }
+  .topbar-title { font-size:18px; }
+  .search-box { display:none; }
+  #btn-import-topbar { display:none !important; }
+  #btn-hamburger { display:flex !important; }
+  #content { padding-bottom:var(--bottom-nav-h); }
+  .page { padding:12px; }
+  .kpi-grid { grid-template-columns:1fr 1fr; gap:8px; }
+  .kpi-card { padding:14px 16px; }
+  .kpi-value { font-size:32px; }
+  .dash-grid,.analytics-row,.auto-grid,.prospect-detail,.calendar-grid,.settings-grid { grid-template-columns:1fr; }
+  .form-row { grid-template-columns:1fr; gap:10px; }
+  .kanban-col { width:240px; }
+  .col-hide-mobile { display:none; }
+  .modal-backdrop { align-items:flex-end; }
+  .modal { max-width:100%; max-height:92vh; animation:modalSlideUp 0.25s ease; }
+  @keyframes modalSlideUp { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
+  .settings-nav { flex-direction:row; overflow-x:auto; }
+  .settings-nav-item { border-bottom:none; flex-shrink:0; font-size:12px; padding:10px 14px; }
+  .settings-nav-item.active { border-left:none; border-bottom:3px solid var(--ember); }
+  .toast-wrap { bottom:calc(var(--bottom-nav-h) + 12px); }
+  .auth-card { padding:24px; }
+}
+@media (max-width:480px) {
+  .kpi-value { font-size:28px; }
+  .kpi-card { padding:12px 14px; }
+  .page { padding:10px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════
+     AUTH SCREEN
+══════════════════════════════════════════════════════ -->
+<div id="auth-screen" class="visible">
+  <div class="auth-container">
+    <div class="auth-logo">iron<span>CRM</span><p>CRM pour clubs de sport</p></div>
+
+    <!-- LOGIN / REGISTER TABS -->
+    <div class="auth-card" id="auth-card-login">
+      <div class="auth-tabs">
+        <div class="auth-tab active" onclick="showAuthTab('login')">Connexion</div>
+        <div class="auth-tab" onclick="showAuthTab('register')">Créer un compte</div>
+      </div>
+      <div id="auth-error" class="auth-error"></div>
+
+      <!-- LOGIN FORM -->
+      <div id="auth-form-login">
+        <div class="auth-title">BON RETOUR</div>
+        <div class="auth-subtitle">Connectez-vous à votre espace ironCRM</div>
+        <div class="auth-field">
+          <label class="auth-label">Email</label>
+          <input class="auth-input" type="email" id="login-email" placeholder="vous@votreclub.fr" autocomplete="email">
+        </div>
+        <div class="auth-field">
+          <label class="auth-label">Mot de passe</label>
+          <input class="auth-input" type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <button class="auth-btn" id="btn-login" onclick="doLogin()">SE CONNECTER</button>
+        <div class="auth-link" style="margin-top:16px;"><a onclick="showForgotPassword()">Mot de passe oublié ?</a></div>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div id="auth-form-register" style="display:none;">
+        <div class="auth-title">CRÉER UN COMPTE</div>
+        <div class="auth-subtitle">Commencez votre essai gratuit 14 jours — sans carte bancaire</div>
+
+        <div class="reg-steps">
+          <div class="reg-step active" id="rstep-1">1. Votre club</div>
+          <div class="reg-step" id="rstep-2">2. Votre compte</div>
+          <div class="reg-step" id="rstep-3">3. Plan</div>
+        </div>
+
+        <!-- Step 1: Club info -->
+        <div class="reg-form-step active" id="reg-step-1">
+          <div class="auth-field">
+            <label class="auth-label">Nom du club *</label>
+            <input class="auth-input" id="reg-club-name" placeholder="Iron Gym Paris">
+          </div>
+          <div class="auth-field">
+            <label class="auth-label">Type de club *</label>
+            <select class="auth-input form-select" id="reg-club-type" style="appearance:none;cursor:pointer;">
+              <option>Salle de fitness</option>
+              <option>CrossFit box</option>
+              <option>Studio yoga / pilates</option>
+              <option>Salle de boxe / arts martiaux</option>
+              <option>Multi-sport</option>
+              <option>Centre aquatique</option>
+              <option>Autre</option>
+            </select>
+          </div>
+          <div class="auth-field">
+            <label class="auth-label">Ville *</label>
+            <input class="auth-input" id="reg-club-city" placeholder="Paris">
+          </div>
+          <button class="auth-btn" onclick="regNext(1)">SUIVANT →</button>
+        </div>
+
+        <!-- Step 2: User info -->
+        <div class="reg-form-step" id="reg-step-2">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="auth-field">
+              <label class="auth-label">Prénom *</label>
+              <input class="auth-input" id="reg-firstname" placeholder="Jean">
+            </div>
+            <div class="auth-field">
+              <label class="auth-label">Nom *</label>
+              <input class="auth-input" id="reg-lastname" placeholder="Martin">
+            </div>
+          </div>
+          <div class="auth-field">
+            <label class="auth-label">Email *</label>
+            <input class="auth-input" type="email" id="reg-email" placeholder="jean@irongymparis.fr" autocomplete="email">
+          </div>
+          <div class="auth-field">
+            <label class="auth-label">Mot de passe *</label>
+            <input class="auth-input" type="password" id="reg-password" placeholder="Min. 8 caractères" autocomplete="new-password">
+            <div class="form-hint">Au moins 8 caractères</div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="auth-btn" style="background:var(--steel);color:var(--muted);flex:0 0 auto;width:auto;padding:14px 20px;" onclick="regBack(2)">←</button>
+            <button class="auth-btn" style="flex:1;" onclick="regNext(2)">SUIVANT →</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Plan choice -->
+        <div class="reg-form-step" id="reg-step-3">
+          <div style="font-size:13px;color:var(--ash);margin-bottom:20px;">Choisissez votre plan — <strong style="color:var(--green)">14 jours gratuits</strong> sur tous les plans.</div>
+          <div id="plan-cards" style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
+            <div class="plan-option selected" data-plan="starter" onclick="selectPlan('starter')" style="background:var(--steel);border:2px solid var(--border);padding:14px 16px;cursor:pointer;transition:all 0.15s;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                  <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--white);font-size:15px;">Starter</div>
+                  <div style="font-size:12px;color:var(--ash);margin-top:2px;">1 utilisateur · 500 prospects</div>
+                </div>
+                <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--ember);">79€<span style="font-size:13px;color:var(--ash);">/mois</span></div>
+              </div>
+            </div>
+            <div class="plan-option" data-plan="pro" onclick="selectPlan('pro')" style="background:var(--steel);border:2px solid var(--border);padding:14px 16px;cursor:pointer;transition:all 0.15s;position:relative;">
+              <div style="position:absolute;top:-1px;right:12px;background:var(--ember);color:white;font-size:9px;font-weight:700;letter-spacing:1px;padding:2px 8px;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;">Populaire</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                  <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--white);font-size:15px;">Pro</div>
+                  <div style="font-size:12px;color:var(--ash);margin-top:2px;">5 utilisateurs · Illimité</div>
+                </div>
+                <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--ember);">149€<span style="font-size:13px;color:var(--ash);">/mois</span></div>
+              </div>
+            </div>
+            <div class="plan-option" data-plan="reseau" onclick="selectPlan('reseau')" style="background:var(--steel);border:2px solid var(--border);padding:14px 16px;cursor:pointer;transition:all 0.15s;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                  <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--white);font-size:15px;">Réseau</div>
+                  <div style="font-size:12px;color:var(--ash);margin-top:2px;">Multi-clubs · API · Illimité</div>
+                </div>
+                <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--ember);">299€<span style="font-size:13px;color:var(--ash);">/mois</span></div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="auth-btn" style="background:var(--steel);color:var(--muted);flex:0 0 auto;width:auto;padding:14px 20px;" onclick="regBack(3)">←</button>
+            <button class="auth-btn" id="btn-register" style="flex:1;" onclick="doRegister()">CRÉER MON CLUB ✓</button>
+          </div>
+          <div style="font-size:11px;color:var(--ash);text-align:center;margin-top:12px;">En créant votre compte, vous acceptez les <a style="color:var(--ember)">CGU</a> d'ironCRM</div>
+        </div>
+      </div>
+
+      <!-- FORGOT PASSWORD -->
+      <div id="auth-form-forgot" style="display:none;">
+        <div class="auth-title">MOT DE PASSE OUBLIÉ</div>
+        <div class="auth-subtitle">Entrez votre email pour recevoir un lien de réinitialisation.</div>
+        <div class="auth-field">
+          <label class="auth-label">Email</label>
+          <input class="auth-input" type="email" id="forgot-email" placeholder="vous@votreclub.fr">
+        </div>
+        <button class="auth-btn" onclick="doForgotPassword()">ENVOYER LE LIEN</button>
+        <div class="auth-link"><a onclick="showAuthTab('login')">← Retour à la connexion</a></div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:20px;font-size:11px;color:var(--ash);">
+      © 2025 ironCRM · Tous droits réservés · <a style="color:var(--ash)">CGU</a> · <a style="color:var(--ash)">Confidentialité</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SUPER ADMIN PANEL
+══════════════════════════════════════════════════════ -->
+<div id="admin-panel">
+  <div class="admin-topbar">
+    <div class="admin-topbar-title">⚡ IRONCRM ADMIN</div>
+    <div style="flex:1;"></div>
+    <span style="font-size:12px;color:var(--ash);font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;text-transform:uppercase;" id="admin-user-label"></span>
+    <button class="btn btn-ghost btn-sm" onclick="doLogout()">Déconnexion</button>
+  </div>
+  <div class="admin-content">
+    <div class="admin-kpi-grid" id="admin-kpis"></div>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-header">
+        <span class="card-title">Tous les clubs</span>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" onclick="loadAdminData()">🔄 Actualiser</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="clubs-table">
+          <thead><tr>
+            <th>Club</th><th>Plan</th><th>Utilisateurs</th><th>Prospects</th><th>Convertis</th><th>Statut</th><th>Créé le</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="admin-clubs-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MAIN APP SHELL
+══════════════════════════════════════════════════════ -->
+<div id="sidebar-overlay" onclick="closeMobileSidebar()"></div>
+
+<nav id="bottom-nav">
+  <div class="bottom-nav-item active" data-page="dashboard" onclick="navigate('dashboard')"><span class="bnav-icon">📊</span><span class="bnav-label">Dashboard</span></div>
+  <div class="bottom-nav-item" data-page="pipeline" onclick="navigate('pipeline')"><span class="bnav-icon">🎯</span><span class="bnav-label">Pipeline</span><span class="bnav-badge" id="bnav-badge" style="display:none">0</span></div>
+  <div class="bottom-nav-item" data-page="prospects" onclick="navigate('prospects')"><span class="bnav-icon">👥</span><span class="bnav-label">Prospects</span></div>
+  <div class="bottom-nav-item" data-page="calendar" onclick="navigate('calendar')"><span class="bnav-icon">📅</span><span class="bnav-label">Agenda</span></div>
+  <div class="bottom-nav-item" onclick="openMobileSidebar()"><span class="bnav-icon">☰</span><span class="bnav-label">Menu</span></div>
+</nav>
+
+<div id="app-shell" class="hidden">
+  <div id="sidebar">
+    <div class="sidebar-logo">iron<span>CRM</span><sub>v2</sub></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Principal</div>
+      <div class="nav-item active" data-page="dashboard" onclick="navigate('dashboard')"><span class="icon">📊</span><span>Dashboard</span></div>
+      <div class="nav-item" data-page="pipeline" onclick="navigate('pipeline')"><span class="icon">🎯</span><span>Pipeline</span><span class="nav-badge" id="badge-pipeline" style="display:none">0</span></div>
+      <div class="nav-item" data-page="prospects" onclick="navigate('prospects')"><span class="icon">👥</span><span>Prospects</span></div>
+      <div class="nav-section">Outils</div>
+      <div class="nav-item" data-page="automations" onclick="navigate('automations')"><span class="icon">⚡</span><span>Automatisations</span></div>
+      <div class="nav-item" data-page="calendar" onclick="navigate('calendar')"><span class="icon">📅</span><span>Calendrier</span></div>
+      <div class="nav-item" data-page="analytics" onclick="navigate('analytics')"><span class="icon">📈</span><span>Analytics</span></div>
+      <div class="nav-section">Système</div>
+      <div class="nav-item" data-page="import" onclick="navigate('import')"><span class="icon">📤</span><span>Import / Export</span></div>
+      <div class="nav-item" data-page="settings" onclick="navigate('settings')"><span class="icon">⚙️</span><span>Paramètres</span></div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="club-badge" id="club-badge-name">— CLUB —</div>
+      <div class="user-card" onclick="navigate('settings')">
+        <div class="avatar" id="user-avatar">?</div>
+        <div class="user-info">
+          <div class="user-name" id="user-name-display">Chargement...</div>
+          <div class="user-role" id="user-role-display">—</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px;" onclick="doLogout()">⎋ Déconnexion</button>
+    </div>
+  </div>
+
+  <div id="main">
+    <div id="topbar">
+      <button id="btn-hamburger" class="btn btn-ghost btn-sm btn-icon" style="display:none" onclick="openMobileSidebar()">☰</button>
+      <div class="topbar-title" id="topbar-title">DASHBOARD</div>
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" placeholder="Rechercher un prospect..." oninput="globalSearch(this.value)" id="global-search">
+      </div>
+      <button id="btn-import-topbar" class="btn btn-ghost btn-sm" onclick="openModal('modal-import-quick')">📤 Import</button>
+      <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-prospect')">+ <span class="btn-label">Nouveau</span></button>
+    </div>
+
+    <div id="content">
+
+      <!-- ═══ DASHBOARD ═══ -->
+      <div class="page active" id="page-dashboard">
+        <div class="kpi-grid" id="kpi-grid">
+          <div class="kpi-card"><div class="loader-wrap" style="padding:20px;"><div class="spinner"></div></div></div>
+          <div class="kpi-card"><div class="loader-wrap" style="padding:20px;"><div class="spinner"></div></div></div>
+          <div class="kpi-card"><div class="loader-wrap" style="padding:20px;"><div class="spinner"></div></div></div>
+          <div class="kpi-card"><div class="loader-wrap" style="padding:20px;"><div class="spinner"></div></div></div>
+        </div>
+        <div class="dash-grid">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Prospects — 12 derniers mois</span></div>
+            <div class="legend">
+              <div class="legend-item"><div class="legend-dot" style="background:var(--ember)"></div>Entrants</div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Convertis</div>
+            </div>
+            <div class="chart-area" id="chart-prospects"></div>
+            <div class="chart-labels" id="chart-labels"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Entonnoir de conversion</span></div>
+            <div class="funnel" id="funnel"></div>
+          </div>
+        </div>
+        <div class="dash-grid">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Activité récente</span></div>
+            <div class="activity-list" id="activity-list"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Sources</span></div>
+            <div id="sources-chart"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ PIPELINE ═══ -->
+      <div class="page" id="page-pipeline">
+        <div class="kanban-wrap" id="kanban-wrap">
+          <div class="loader-wrap"><div class="spinner"></div><div class="loader-text">Chargement pipeline...</div></div>
+        </div>
+      </div>
+
+      <!-- ═══ PROSPECTS ═══ -->
+      <div class="page" id="page-prospects">
+        <div id="mobile-search-bar" style="display:none;margin-bottom:12px;">
+          <div class="search-box" style="width:100%;"><span>🔍</span><input type="text" placeholder="Rechercher..." oninput="globalSearch(this.value)" id="mobile-search"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;" id="filter-buttons"></div>
+          <div style="margin-left:auto;display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm col-hide-mobile" onclick="exportCSV()">⬇ CSV</button>
+            <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-prospect')">+ Ajouter</button>
+          </div>
+        </div>
+        <div class="card" style="padding:0;">
+          <div class="table-wrap">
+            <table id="prospects-table">
+              <thead><tr>
+                <th onclick="sortTable('lastname')">Nom ↕</th>
+                <th class="col-hide-mobile" onclick="sortTable('email')">Email ↕</th>
+                <th class="col-hide-mobile">Téléphone</th>
+                <th onclick="sortTable('source')">Source ↕</th>
+                <th onclick="sortTable('status')">Statut ↕</th>
+                <th class="col-hide-mobile" onclick="sortTable('score')">Score ↕</th>
+                <th class="col-hide-mobile" onclick="sortTable('created_at')">Date ↕</th>
+                <th>Actions</th>
+              </tr></thead>
+              <tbody id="prospects-tbody">
+                <tr><td colspan="8"><div class="loader-wrap"><div class="spinner"></div></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ FICHE PROSPECT ═══ -->
+      <div class="page" id="page-prospect-detail">
+        <div style="margin-bottom:16px;">
+          <button class="btn btn-ghost btn-sm" onclick="navigate('prospects')">← Retour</button>
+        </div>
+        <div class="prospect-detail" id="prospect-detail-content"></div>
+      </div>
+
+      <!-- ═══ AUTOMATIONS ═══ -->
+      <div class="page" id="page-automations">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+          <div style="font-size:13px;color:var(--ash);">Séquences automatiques déclenchées sur vos prospects</div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-automation')">+ Nouvelle séquence</button>
+        </div>
+        <div class="auto-grid" id="automations-grid">
+          <div class="loader-wrap"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- ═══ CALENDRIER ═══ -->
+      <div class="page" id="page-calendar">
+        <div class="calendar-grid">
+          <div class="cal-wrap">
+            <div class="cal-header">
+              <div class="cal-title" id="cal-month-title">—</div>
+              <div class="cal-nav">
+                <button onclick="calPrev()">‹</button>
+                <button onclick="calToday()">Auj.</button>
+                <button onclick="calNext()">›</button>
+              </div>
+            </div>
+            <div class="cal-days-header">
+              <div class="cal-day-name">Lun</div><div class="cal-day-name">Mar</div>
+              <div class="cal-day-name">Mer</div><div class="cal-day-name">Jeu</div>
+              <div class="cal-day-name">Ven</div><div class="cal-day-name">Sam</div>
+              <div class="cal-day-name">Dim</div>
+            </div>
+            <div class="cal-days" id="cal-days"></div>
+          </div>
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <span class="card-title" style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ash);font-weight:700;font-family:'Barlow Condensed',sans-serif;">RDV — <span id="selected-date-label">—</span></span>
+              <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-rdv')">+ RDV</button>
+            </div>
+            <div class="rdv-list" id="rdv-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ ANALYTICS ═══ -->
+      <div class="page" id="page-analytics">
+        <div class="kpi-grid" id="analytics-kpis" style="margin-bottom:14px;"></div>
+        <div class="analytics-row">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Conversions par mois</span></div>
+            <div class="legend">
+              <div class="legend-item"><div class="legend-dot" style="background:var(--ember)"></div>Entrants</div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Convertis</div>
+            </div>
+            <div class="chart-area" id="analytics-chart-conv"></div>
+            <div class="chart-labels" id="analytics-chart-labels"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Sources</span></div>
+            <div id="analytics-sources"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Performance équipe</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Commercial</th><th>Assignés</th><th>Contactés</th><th>RDV</th><th>Convertis</th><th>Taux</th><th>Performance</th></tr></thead>
+              <tbody id="perf-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ IMPORT / EXPORT ═══ -->
+      <div class="page" id="page-import">
+        <div class="pill-tabs">
+          <div class="pill-tab active" onclick="switchImportTab('import')">Importer CSV</div>
+          <div class="pill-tab" onclick="switchImportTab('export')">Exporter</div>
+          <div class="pill-tab" onclick="switchImportTab('mapping')">Intégrations</div>
+        </div>
+        <div id="import-tab-import">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Import CSV</span></div>
+            <p style="font-size:13px;color:var(--ash);margin-bottom:16px;">Colonnes : <code style="background:var(--steel);padding:2px 6px;color:var(--ember)">prenom, nom, email, telephone, source, statut, objectif, budget, notes</code></p>
+            <div class="drop-zone" id="drop-zone" onclick="document.getElementById('csv-file-input').click()" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+              <div class="drop-zone-icon">📁</div>
+              <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Glissez votre CSV ici</div>
+              <div style="font-size:12px;">ou cliquez pour parcourir</div>
+            </div>
+            <input type="file" id="csv-file-input" accept=".csv" style="display:none" onchange="handleCSVFile(event)">
+            <div id="import-preview" style="margin-top:16px;display:none;">
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;"><span id="import-count">0</span> prospects détectés</div>
+              <div class="table-wrap" style="max-height:200px;overflow-y:auto;"><table id="import-preview-table"><thead></thead><tbody></tbody></table></div>
+              <div style="display:flex;gap:8px;margin-top:12px;">
+                <button class="btn btn-primary" onclick="confirmImport()">✓ Confirmer l'import</button>
+                <button class="btn btn-ghost" onclick="cancelImport()">Annuler</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="import-tab-export" style="display:none;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+            <div class="card" style="cursor:pointer;" onclick="exportCSV()"><div style="font-size:32px;margin-bottom:8px;">📊</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;text-transform:uppercase;color:var(--white);letter-spacing:1px;margin-bottom:4px;">Prospects CSV</div><div style="font-size:12px;color:var(--ash);">Tous les prospects avec données complètes</div></div>
+            <div class="card" style="cursor:pointer;" onclick="exportRDVCSV()"><div style="font-size:32px;margin-bottom:8px;">📅</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;text-transform:uppercase;color:var(--white);letter-spacing:1px;margin-bottom:4px;">RDV CSV</div><div style="font-size:12px;color:var(--ash);">Tous les rendez-vous planifiés</div></div>
+          </div>
+        </div>
+        <div id="import-tab-mapping" style="display:none;">
+          <div class="card"><div class="card-header"><span class="card-title">Intégrations</span></div><div id="integrations-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px;"></div></div>
+        </div>
+      </div>
+
+      <!-- ═══ SETTINGS ═══ -->
+      <div class="page" id="page-settings">
+        <div class="settings-grid">
+          <div class="settings-nav">
+            <div class="settings-nav-item active" onclick="switchSettings('general')">⚙️ Général</div>
+            <div class="settings-nav-item" onclick="switchSettings('club')">🏋️ Mon club</div>
+            <div class="settings-nav-item" onclick="switchSettings('email')">📧 Email SMTP</div>
+            <div class="settings-nav-item" onclick="switchSettings('sms')">💬 SMS</div>
+            <div class="settings-nav-item" onclick="switchSettings('team')">👥 Équipe</div>
+            <div class="settings-nav-item" onclick="switchSettings('pipeline')">🎯 Pipeline</div>
+            <div class="settings-nav-item" onclick="switchSettings('plan')">💳 Mon abonnement</div>
+            <div class="settings-nav-item" onclick="switchSettings('data')">🗑️ Données</div>
+          </div>
+          <div id="settings-content">
+            <div class="settings-panel active" id="settings-general">
+              <div class="settings-section">
+                <div class="settings-section-title">Profil utilisateur</div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">Prénom</label><input class="form-input" id="s-firstname"></div>
+                  <div class="form-group"><label class="form-label">Nom</label><input class="form-input" id="s-lastname"></div>
+                </div>
+                <div class="form-full form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="s-email" disabled style="opacity:0.5;"></div>
+                <button class="btn btn-primary" onclick="saveUserProfile()">Sauvegarder le profil</button>
+              </div>
+              <div class="settings-section">
+                <div class="settings-section-title">Changer le mot de passe</div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">Nouveau mot de passe</label><input class="form-input" type="password" id="s-new-password" placeholder="••••••••"></div>
+                  <div class="form-group"><label class="form-label">Confirmation</label><input class="form-input" type="password" id="s-confirm-password" placeholder="••••••••"></div>
+                </div>
+                <button class="btn btn-ghost" onclick="changePassword()">Mettre à jour le mot de passe</button>
+              </div>
+            </div>
+            <div class="settings-panel" id="settings-club">
+              <div class="settings-section">
+                <div class="settings-section-title">Informations du club</div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">Nom du club</label><input class="form-input" id="s-club-name"></div>
+                  <div class="form-group"><label class="form-label">Type de club</label><select class="form-select" id="s-club-type"><option>Salle de fitness</option><option>CrossFit box</option><option>Studio yoga/pilates</option><option>Salle de boxe</option><option>Multi-sport</option><option>Centre aquatique</option></select></div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">Téléphone</label><input class="form-input" id="s-club-phone"></div>
+                  <div class="form-group"><label class="form-label">Site web</label><input class="form-input" id="s-club-website"></div>
+                </div>
+                <div class="form-full form-group"><label class="form-label">Adresse</label><input class="form-input" id="s-club-address"></div>
+                <button class="btn btn-primary" onclick="saveClubSettings()">Sauvegarder</button>
+              </div>
+            </div>
+            <div class="settings-panel" id="settings-email">
+              <div class="settings-section">
+                <div class="settings-section-title">Configuration SMTP</div>
+                <p style="font-size:13px;color:var(--ash);margin-bottom:20px;">Configurez votre serveur email pour les séquences automatiques.</p>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">Hôte SMTP</label><input class="form-input" id="s-smtp-host" placeholder="smtp.gmail.com"></div>
+                  <div class="form-group"><label class="form-label">Port</label><input class="form-input" type="number" id="s-smtp-port" placeholder="587"></div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">Email expéditeur</label><input class="form-input" type="email" id="s-smtp-email"></div>
+                  <div class="form-group"><label class="form-label">Nom expéditeur</label><input class="form-input" id="s-smtp-name"></div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">Identifiant</label><input class="form-input" id="s-smtp-user"></div>
+                  <div class="form-group"><label class="form-label">Mot de passe</label><input class="form-input" type="password" id="s-smtp-pass"></div>
+                </div>
+                <div style="display:flex;gap:8px;"><button class="btn btn-primary" onclick="saveClubSettings()">Sauvegarder</button><button class="btn btn-ghost" onclick="toast('Simulation : SMTP OK ✓','success')">Tester</button></div>
+              </div>
+            </div>
+            <div class="settings-panel" id="settings-sms">
+              <div class="settings-section">
+                <div class="settings-section-title">Configuration SMS</div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">Provider</label><select class="form-select" id="s-sms-provider"><option>Twilio</option><option>OVH SMS</option><option>Vonage</option></select></div>
+                  <div class="form-group"><label class="form-label">Numéro expéditeur</label><input class="form-input" id="s-sms-from" placeholder="+33612345678"></div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">API Key / Account SID</label><input class="form-input" id="s-sms-sid"></div>
+                  <div class="form-group"><label class="form-label">Auth Token</label><input class="form-input" type="password" id="s-sms-token"></div>
+                </div>
+                <button class="btn btn-primary" onclick="saveClubSettings()">Sauvegarder</button>
+              </div>
+            </div>
+            <div class="settings-panel" id="settings-team">
+              <div class="settings-section">
+                <div class="settings-section-title">Membres de l'équipe</div>
+                <div id="team-list" style="margin-bottom:16px;"></div>
+                <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-member')">+ Inviter un membre</button>
+              </div>
+            </div>
+            <div class="settings-panel" id="settings-pipeline">
+              <div class="settings-section">
+                <div class="settings-section-title">Étapes du pipeline</div>
+                <p style="font-size:13px;color:var(--ash);margin-bottom:16px;">Personnalisez les colonnes de votre Kanban.</p>
+                <div id="pipeline-stages-list" style="margin-bottom:16px;"></div>
+                <button class="btn btn-primary btn-sm" onclick="addPipelineStage()">+ Ajouter une étape</button>
+              </div>
+            </div>
+            <div class="settings-panel" id="settings-plan">
+              <div class="settings-section">
+                <div class="settings-section-title">Mon abonnement</div>
+                <div id="plan-info-block"></div>
+              </div>
+            </div>
+            <div class="settings-panel" id="settings-data">
+              <div class="settings-section">
+                <div class="settings-section-title">Gestion des données</div>
+                <p style="font-size:13px;color:var(--ash);margin-bottom:20px;">Ces actions sont irréversibles.</p>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                  <button class="btn btn-ghost" onclick="exportCSV()">⬇ Exporter tous les prospects</button>
+                  <button class="btn btn-danger" onclick="confirmClearData()">🗑️ Supprimer tous les prospects</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app-shell -->
+
+<!-- ══════════════════════════════════════════════════════
+     MODALS
+══════════════════════════════════════════════════════ -->
+<!-- Add Prospect -->
+<div class="modal-backdrop" id="modal-add-prospect">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">NOUVEAU PROSPECT</span><button class="modal-close" onclick="closeModal('modal-add-prospect')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Prénom *</label><input class="form-input" id="p-firstname" placeholder="Marie"></div>
+        <div class="form-group"><label class="form-label">Nom *</label><input class="form-input" id="p-lastname" placeholder="Dupont"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="p-email" placeholder="marie@email.com"></div>
+        <div class="form-group"><label class="form-label">Téléphone</label><input class="form-input" id="p-phone" placeholder="+33 6 12 34 56 78"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Source</label><select class="form-select" id="p-source"><option>Facebook Ads</option><option>Google Ads</option><option>Site web</option><option>Instagram</option><option>Parrainage</option><option>Passage direct</option><option>Téléphone</option><option>Autre</option></select></div>
+        <div class="form-group"><label class="form-label">Statut</label><select class="form-select" id="p-status"></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Objectif</label><select class="form-select" id="p-goal"><option>Perte de poids</option><option>Prise de muscle</option><option>Remise en forme</option><option>Performance sportive</option><option>Bien-être / Relaxation</option><option>Rééducation</option></select></div>
+        <div class="form-group"><label class="form-label">Budget mensuel</label><select class="form-select" id="p-budget"><option>{'<'} 30€</option><option>30-50€</option><option>50-80€</option><option>80-120€</option><option>{'>'} 120€</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Commercial assigné</label><select class="form-select" id="p-assignee"></select></div>
+        <div class="form-group"><label class="form-label">Score (0-100)</label><input class="form-input" type="number" id="p-score" min="0" max="100" value="50"></div>
+      </div>
+      <div class="form-full form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="p-notes" placeholder="Informations complémentaires..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-prospect')">Annuler</button>
+      <button class="btn btn-primary" id="btn-save-prospect" onclick="saveProspect()">Créer le prospect</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Prospect -->
+<div class="modal-backdrop" id="modal-edit-prospect">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">MODIFIER LE PROSPECT</span><button class="modal-close" onclick="closeModal('modal-edit-prospect')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="ep-id">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Prénom</label><input class="form-input" id="ep-firstname"></div>
+        <div class="form-group"><label class="form-label">Nom</label><input class="form-input" id="ep-lastname"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="ep-email"></div>
+        <div class="form-group"><label class="form-label">Téléphone</label><input class="form-input" id="ep-phone"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Source</label><select class="form-select" id="ep-source"><option>Facebook Ads</option><option>Google Ads</option><option>Site web</option><option>Instagram</option><option>Parrainage</option><option>Passage direct</option><option>Téléphone</option><option>Autre</option></select></div>
+        <div class="form-group"><label class="form-label">Statut</label><select class="form-select" id="ep-status"></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Objectif</label><select class="form-select" id="ep-goal"><option>Perte de poids</option><option>Prise de muscle</option><option>Remise en forme</option><option>Performance sportive</option><option>Bien-être / Relaxation</option><option>Rééducation</option></select></div>
+        <div class="form-group"><label class="form-label">Budget</label><select class="form-select" id="ep-budget"><option>{'<'} 30€</option><option>30-50€</option><option>50-80€</option><option>80-120€</option><option>{'>'} 120€</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Commercial</label><select class="form-select" id="ep-assignee"></select></div>
+        <div class="form-group"><label class="form-label">Score</label><input class="form-input" type="number" id="ep-score" min="0" max="100"></div>
+      </div>
+      <div class="form-full form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="ep-notes"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" onclick="deleteProspect(document.getElementById('ep-id').value)">Supprimer</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit-prospect')">Annuler</button>
+      <button class="btn btn-primary" onclick="updateProspect()">Mettre à jour</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add RDV -->
+<div class="modal-backdrop" id="modal-add-rdv">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">NOUVEAU RDV</span><button class="modal-close" onclick="closeModal('modal-add-rdv')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Titre *</label><input class="form-input" id="rdv-title" placeholder="Visite du club"></div>
+        <div class="form-group"><label class="form-label">Prospect</label><select class="form-select" id="rdv-prospect"></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Date *</label><input class="form-input" type="date" id="rdv-date"></div>
+        <div class="form-group"><label class="form-label">Heure *</label><input class="form-input" type="time" id="rdv-time" value="10:00"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Durée (min)</label><input class="form-input" type="number" id="rdv-duration" value="30" step="15"></div>
+        <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="rdv-type"><option>Visite du club</option><option>Cours essai</option><option>Appel téléphonique</option><option>Présentation offre</option><option>Signature contrat</option></select></div>
+      </div>
+      <div class="form-full form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="rdv-notes" placeholder="Infos sur le RDV..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-rdv')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveRDV()">Créer le RDV</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Automation -->
+<div class="modal-backdrop" id="modal-add-automation">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">NOUVELLE SÉQUENCE</span><button class="modal-close" onclick="closeModal('modal-add-automation')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-full form-group"><label class="form-label">Nom *</label><input class="form-input" id="auto-name" placeholder="Séquence bienvenue"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Déclencheur</label><select class="form-select" id="auto-trigger"><option value="new_prospect">Nouveau prospect</option><option value="not_contacted_2d">Non contacté 2j</option><option value="after_visit">Après visite</option><option value="offer_no_reply_3d">Offre sans réponse 3j</option><option value="manual">Manuel</option></select></div>
+        <div class="form-group"><label class="form-label">Filtre source</label><select class="form-select" id="auto-source"><option value="">Toutes sources</option><option>Facebook Ads</option><option>Google Ads</option><option>Site web</option><option>Instagram</option></select></div>
+      </div>
+      <div class="form-full form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="auto-desc" placeholder="Décrivez l'objectif..."></textarea></div>
+      <div style="margin-top:8px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--ash);font-weight:700;margin-bottom:10px;">Actions</div>
+        <div id="auto-steps-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;"></div>
+        <button class="btn btn-ghost btn-sm" onclick="addAutoStep()">+ Ajouter une action</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-automation')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveAutomation()">Créer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Member -->
+<div class="modal-backdrop" id="modal-add-member">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header"><span class="modal-title">INVITER UN MEMBRE</span><button class="modal-close" onclick="closeModal('modal-add-member')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-full form-group"><label class="form-label">Prénom Nom *</label><input class="form-input" id="member-name" placeholder="Jean Martin"></div>
+      <div class="form-full form-group"><label class="form-label">Email *</label><input class="form-input" type="email" id="member-email" placeholder="jean@club.fr"></div>
+      <div class="form-full form-group"><label class="form-label">Rôle</label><select class="form-select" id="member-role"><option value="commercial">Commercial</option><option value="manager">Manager</option><option value="admin">Admin</option></select></div>
+      <div style="background:var(--steel);border:1px solid var(--border);padding:12px;margin-top:4px;font-size:12px;color:var(--ash);line-height:1.6;">
+        ℹ️ Un email d'invitation sera envoyé. L'utilisateur devra créer son mot de passe via le lien reçu.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-member')">Annuler</button>
+      <button class="btn btn-primary" onclick="inviteMember()">Envoyer l'invitation</button>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Import -->
+<div class="modal-backdrop" id="modal-import-quick">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header"><span class="modal-title">IMPORT RAPIDE CSV</span><button class="modal-close" onclick="closeModal('modal-import-quick')">✕</button></div>
+    <div class="modal-body">
+      <div class="drop-zone" onclick="document.getElementById('csv-quick-input').click()" ondrop="handleDropQuick(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+        <div class="drop-zone-icon">📁</div>
+        <div style="font-size:14px;font-weight:600;">Glissez votre CSV ici</div>
+      </div>
+      <input type="file" id="csv-quick-input" accept=".csv" style="display:none" onchange="handleCSVFileQuick(event)">
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+<script>
+
+// ═══════════════════════════════════════════════════════════════
+// CONFIG SUPABASE — REMPLACER PAR VOS VRAIES VALEURS
+// ═══════════════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://ifsndbesjjhumemystye.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmc25kYmVzampodW1lbXlzdHllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyNjQ2NjIsImV4cCI6MjA4Nzg0MDY2Mn0.DzNvojVm43gfQedi61-UJOH-oSMF9W7W5SO4pjkEJtw';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const DEMO_MODE = SUPABASE_URL === 'VOTRE_SUPABASE_URL';
+
+// ═══════════════════════════════════════════════════════════════
+// STATE GLOBAL
+// ═══════════════════════════════════════════════════════════════
+let state = {
+  session:null, currentUser:null, currentClub:null, isSuperAdmin:false,
+  prospects:[], stages:[], team:[], rdvs:[], automations:[], activity:[],
+  currentPage:'dashboard', currentProspectId:null,
+  calYear:new Date().getFullYear(), calMonth:new Date().getMonth(),
+  selectedDate:new Date().toISOString().split('T')[0],
+  filterStatus:'all', sortCol:'created_at', sortDir:-1,
+  importData:[], autoStepCount:0, selectedPlan:'starter', currentRegStep:1,
+};
+
+// ═══════════════════════════════════════════════════════════════
+// DEMO DATA
+// ═══════════════════════════════════════════════════════════════
+const demoData = {
+  club:{ id:'demo-club', name:'Iron Gym Paris', slug:'iron-gym-paris', plan:'pro', max_users:5, max_prospects:9999, phone:'+33 1 23 45 67 89', club_type:'Salle de fitness' },
+  user:{ id:'demo-user', club_id:'demo-club', email:'admin@irongym.fr', firstname:'Alexandre', lastname:'Durand', role:'admin' },
+  stages:[
+    { id:'s1', club_id:'demo-club', name:'Nouveau', slug:'nouveau', color:'#6b6b7a', position:0 },
+    { id:'s2', club_id:'demo-club', name:'Contacté', slug:'contacte', color:'#c8943a', position:1 },
+    { id:'s3', club_id:'demo-club', name:'En visite', slug:'visite', color:'#3b82f6', position:2 },
+    { id:'s4', club_id:'demo-club', name:'Offre envoyée', slug:'offre', color:'#ff4c00', position:3 },
+    { id:'s5', club_id:'demo-club', name:'Converti ✓', slug:'converti', color:'#22c55e', position:4, is_won:true },
+    { id:'s6', club_id:'demo-club', name:'Perdu', slug:'perdu', color:'#ef4444', position:5, is_lost:true },
+  ],
+  team:[
+    { id:'t1', club_id:'demo-club', email:'alex@irongym.fr', firstname:'Alexandre', lastname:'Durand', role:'admin' },
+    { id:'t2', club_id:'demo-club', email:'sophie@irongym.fr', firstname:'Sophie', lastname:'Martin', role:'commercial' },
+    { id:'t3', club_id:'demo-club', email:'thomas@irongym.fr', firstname:'Thomas', lastname:'Leblanc', role:'commercial' },
+  ],
+  prospects:[
+    { id:'p1', club_id:'demo-club', firstname:'Marie', lastname:'Laurent', email:'marie.laurent@gmail.com', phone:'06 12 34 56 78', source:'Facebook Ads', status:'visite', goal:'Perte de poids', budget:'30-50€', score:82, assignee_id:'t2', notes:'Intéressée par le cours de spinning.', created_at:'2025-01-15T10:20:00Z' },
+    { id:'p2', club_id:'demo-club', firstname:'Thomas', lastname:'Renard', email:'thomas.r@hotmail.fr', phone:'07 98 76 54 32', source:'Google Ads', status:'contacte', goal:'Prise de muscle', budget:'50-80€', score:65, assignee_id:'t3', notes:'Cherche coaching personnalisé.', created_at:'2025-01-18T09:00:00Z' },
+    { id:'p3', club_id:'demo-club', firstname:'Léa', lastname:'Morin', email:'lea.morin@yahoo.fr', phone:'06 55 44 33 22', source:'Site web', status:'converti', goal:'Bien-être', budget:'30-50€', score:95, assignee_id:'t2', notes:'Abonnement annuel signé.', created_at:'2025-01-10T16:00:00Z' },
+    { id:'p4', club_id:'demo-club', firstname:'Paul', lastname:'Dubois', email:'pdubois@gmail.com', phone:'06 11 22 33 44', source:'Instagram', status:'offre', goal:'Performance sportive', budget:'80-120€', score:73, assignee_id:'t3', notes:'Offre premium envoyée.', created_at:'2025-01-20T08:30:00Z' },
+    { id:'p5', club_id:'demo-club', firstname:'Sarah', lastname:'Petit', email:'sarah.petit@orange.fr', phone:'07 77 88 99 00', source:'Parrainage', status:'nouveau', goal:'Remise en forme', budget:'< 30€', score:45, assignee_id:'t2', notes:'Parrainée par Léa Morin.', created_at:'2025-01-22T11:00:00Z' },
+    { id:'p6', club_id:'demo-club', firstname:'Alex', lastname:'Martin', email:'alexmartin@live.fr', phone:'06 33 44 55 66', source:'Téléphone', status:'visite', goal:'Rééducation', budget:'50-80€', score:60, assignee_id:'t3', notes:'Blessure genou.', created_at:'2025-01-19T14:00:00Z' },
+    { id:'p7', club_id:'demo-club', firstname:'Camille', lastname:'Roy', email:'camille.roy@gmail.com', phone:'07 12 23 34 45', source:'Facebook Ads', status:'converti', goal:'Perte de poids', budget:'30-50€', score:88, assignee_id:'t2', notes:'', created_at:'2025-01-08T09:00:00Z' },
+    { id:'p8', club_id:'demo-club', firstname:'Lucas', lastname:'Bernard', email:'lucas.b@sfr.fr', phone:'06 99 88 77 66', source:'Google Ads', status:'perdu', goal:'Prise de muscle', budget:'< 30€', score:20, assignee_id:'t3', notes:'Parti chez un concurrent.', created_at:'2025-01-05T10:00:00Z' },
+  ],
+  rdvs:[
+    { id:'r1', club_id:'demo-club', title:'Visite du club', prospect_id:'p1', scheduled_at:'2025-02-27T10:30:00Z', duration_minutes:45, type:'Visite du club', notes:'', status:'scheduled' },
+    { id:'r2', club_id:'demo-club', title:'Cours essai CrossFit', prospect_id:'p2', scheduled_at:'2025-02-27T14:00:00Z', duration_minutes:60, type:'Cours essai', notes:'Apporter tenue sportive', status:'scheduled' },
+  ],
+  automations:[
+    { id:'a1', club_id:'demo-club', name:'Bienvenue immédiat', trigger_type:'new_prospect', source_filter:'', description:'Email de bienvenue dans les 5 minutes.', steps:[{type:'email',delay:0,msg:'Email de bienvenue'},{type:'task',delay:60,msg:'Rappel appel commercial'}], is_enabled:true, run_count:47 },
+    { id:'a2', club_id:'demo-club', name:'Relance J+2 SMS', trigger_type:'not_contacted_2d', source_filter:'', description:'SMS si aucun contact après 2 jours.', steps:[{type:'sms',delay:2880,msg:'SMS relance'}], is_enabled:true, run_count:23 },
+    { id:'a3', club_id:'demo-club', name:'Nurturing Facebook', trigger_type:'new_prospect', source_filter:'Facebook Ads', description:'Séquence pour les prospects Facebook.', steps:[{type:'email',delay:0,msg:'Email découverte'},{type:'email',delay:7200,msg:'Email témoignages'}], is_enabled:false, run_count:0 },
+    { id:'a4', club_id:'demo-club', name:'Post-visite', trigger_type:'after_visit', source_filter:'', description:'Offre personnalisée après la visite.', steps:[{type:'email',delay:60,msg:'Email récapitulatif + offre'},{type:'task',delay:1440,msg:'Appel de suivi'}], is_enabled:true, run_count:18 },
+  ],
+  activity:[
+    { text:'<strong>Marie Laurent</strong> a visité le club', color:'#3b82f6', created_at:new Date(Date.now()-7200000).toISOString() },
+    { text:'Email de bienvenue envoyé à <strong>Sarah Petit</strong>', color:'#ff4c00', created_at:new Date(Date.now()-10800000).toISOString() },
+    { text:'<strong>Léa Morin</strong> a souscrit un abonnement', color:'#22c55e', created_at:new Date(Date.now()-86400000).toISOString() },
+    { text:'<strong>Lucas Bernard</strong> marqué comme perdu', color:'#ef4444', created_at:new Date(Date.now()-90000000).toISOString() },
+  ],
+};
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+(async function init() {
+  if (DEMO_MODE) { loadDemoMode(); return; }
+  sb.auth.onAuthStateChange(async (event, session) => {
+    state.session = session;
+    if (session) await loadUserContext(session);
+    else showAuthScreen();
+  });
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session) showAuthScreen();
+})();
+
+function loadDemoMode() {
+  state.currentClub = demoData.club;
+  state.currentUser = demoData.user;
+  state.stages = [...demoData.stages];
+  state.team = [...demoData.team];
+  state.prospects = [...demoData.prospects];
+  state.rdvs = [...demoData.rdvs];
+  state.automations = [...demoData.automations];
+  state.activity = [...demoData.activity];
+  showApp();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// IRONCRM — CORRECTIF CONNEXION
+// ═══════════════════════════════════════════════════════════════
+//
+// Dans ton fichier HTML, recherche (Ctrl+F) la fonction :
+//
+//   async function loadUserContext(session)
+//
+// Et remplace TOUTE la fonction (du "async function" jusqu'à son "}")
+// par le code ci-dessous :
+// ═══════════════════════════════════════════════════════════════
+
+async function loadUserContext(session) {
+  try {
+    // ✅ FIX 1: maybeSingle() au lieu de single()
+    // single() plante si 0 résultat → maybeSingle() retourne null proprement
+    const { data:adminData } = await sb.from('super_admins').select('*').eq('auth_id',session.user.id).maybeSingle();
+    if (adminData) {
+      state.isSuperAdmin = true;
+      state.currentUser = { firstname:'Super', lastname:'Admin', email:session.user.email, role:'superadmin' };
+      showAdminPanel(); await loadAdminData(); return;
+    }
+
+    // ✅ FIX 2: maybeSingle() au lieu de single()
+    const { data:userData, error:userError } = await sb.from('users').select('*, clubs(*)').eq('auth_id',session.user.id).maybeSingle();
+
+    // ✅ FIX 3: Ne PAS faire doLogout() automatiquement (boucle infinie)
+    if (userError || !userData) {
+      console.error('Profil introuvable:', userError);
+      toast('Profil introuvable — contactez le support','error');
+      return;
+    }
+
+    state.currentUser = userData;
+    state.currentClub = userData.clubs;
+    await Promise.all([loadStages(),loadTeam(),loadProspects(),loadRDVs(),loadAutomations(),loadActivity()]);
+    showApp();
+  } catch(err) {
+    console.error('loadUserContext error:', err);
+    toast('Erreur de chargement: ' + err.message,'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AUTH UI
+// ═══════════════════════════════════════════════════════════════
+function showAuthScreen() {
+  document.getElementById('auth-screen').classList.add('visible');
+  document.getElementById('app-shell').classList.add('hidden');
+  document.getElementById('admin-panel').classList.remove('visible');
+}
+
+function showApp() {
+  document.getElementById('auth-screen').classList.remove('visible');
+  document.getElementById('app-shell').classList.remove('hidden');
+  document.getElementById('admin-panel').classList.remove('visible');
+  const u = state.currentUser, c = state.currentClub;
+  document.getElementById('user-avatar').textContent = (u?.firstname?.[0]||'?').toUpperCase();
+  document.getElementById('user-name-display').textContent = ((u?.firstname||'')+' '+(u?.lastname||'')).trim();
+  document.getElementById('user-role-display').textContent = u?.role||'—';
+  document.getElementById('club-badge-name').textContent = c?.name||'—';
+  if (DEMO_MODE) {
+    const banner = document.createElement('div');
+    banner.style.cssText = 'background:rgba(200,148,58,0.15);border-bottom:1px solid rgba(200,148,58,0.3);padding:6px 28px;font-size:12px;color:var(--gold);font-family:Barlow Condensed,sans-serif;letter-spacing:1px;text-transform:uppercase;font-weight:700;text-align:center;flex-shrink:0;';
+    banner.innerHTML = '⚡ MODE DÉMO — Données locales — <a style="color:var(--ember);cursor:pointer;" onclick="window.open(\'https://supabase.com\',\'_blank\')">Connectez Supabase pour activer le multi-club →</a>';
+    document.getElementById('main').insertBefore(banner, document.getElementById('topbar'));
+  }
+  navigate('dashboard');
+  updateBadges();
+}
+
+function showAdminPanel() {
+  document.getElementById('auth-screen').classList.remove('visible');
+  document.getElementById('app-shell').classList.add('hidden');
+  document.getElementById('admin-panel').classList.add('visible');
+  document.getElementById('admin-user-label').textContent = state.currentUser?.email||'';
+}
+
+function showAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',i===(tab==='login'?0:1)));
+  document.getElementById('auth-form-login').style.display = tab==='login'?'':'none';
+  document.getElementById('auth-form-register').style.display = tab==='register'?'':'none';
+  document.getElementById('auth-form-forgot').style.display = 'none';
+  document.getElementById('auth-error').classList.remove('visible');
+}
+
+function showForgotPassword() {
+  document.getElementById('auth-form-login').style.display = 'none';
+  document.getElementById('auth-form-forgot').style.display = '';
+  document.getElementById('auth-error').classList.remove('visible');
+}
+
+async function doLogin() {
+  if (DEMO_MODE) { loadDemoMode(); return; }
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const btn = document.getElementById('btn-login');
+  if (!email||!password) { showAuthError('Email et mot de passe requis'); return; }
+  btn.disabled=true; btn.textContent='CONNEXION...';
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  btn.disabled=false; btn.textContent='SE CONNECTER';
+  if (error) showAuthError(error.message==='Invalid login credentials'?'Email ou mot de passe incorrect':error.message);
+}
+
+async function doRegister() {
+  if (DEMO_MODE) { loadDemoMode(); return; }
+  const btn = document.getElementById('btn-register');
+  const clubName = document.getElementById('reg-club-name').value.trim();
+  const firstname = document.getElementById('reg-firstname').value.trim();
+  const lastname = document.getElementById('reg-lastname').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+  if (!clubName||!firstname||!email||!password) { showAuthError('Tous les champs requis'); return; }
+  if (password.length<8) { showAuthError('Mot de passe trop court (min. 8 caractères)'); return; }
+  btn.disabled=true; btn.textContent='CRÉATION...';
+  const { data:authData, error:authError } = await sb.auth.signUp({ email, password });
+  if (authError) { showAuthError(authError.message); btn.disabled=false; btn.textContent='CRÉER MON CLUB ✓'; return; }
+  const slug = clubName.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+Date.now();
+  const { error:regError } = await sb.rpc('register_new_club',{
+    p_club_name:clubName, p_club_slug:slug,
+    p_user_email:email, p_user_firstname:firstname, p_user_lastname:lastname,
+    p_auth_id:authData.user.id
+  });
+  if (regError) { showAuthError(regError.message); btn.disabled=false; btn.textContent='CRÉER MON CLUB ✓'; return; }
+  toast('Compte créé ! Vérifiez votre email.','success');
+  btn.disabled=false; btn.textContent='CRÉER MON CLUB ✓';
+}
+
+async function doForgotPassword() {
+  if (DEMO_MODE) { toast('Mode démo','info'); return; }
+  const email = document.getElementById('forgot-email').value.trim();
+  if (!email) { showAuthError('Email requis'); return; }
+  const { error } = await sb.auth.resetPasswordForEmail(email,{ redirectTo:window.location.href });
+  if (error) { showAuthError(error.message); return; }
+  toast('Email de réinitialisation envoyé ✓','success');
+}
+
+async function doLogout() {
+  if (!DEMO_MODE) await sb.auth.signOut();
+  Object.assign(state,{session:null,currentUser:null,currentClub:null,isSuperAdmin:false,prospects:[],stages:[],team:[],rdvs:[],automations:[],activity:[]});
+  showAuthScreen();
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent=msg; el.classList.add('visible');
+}
+
+function regNext(step) {
+  document.getElementById('auth-error').classList.remove('visible');
+  if (step===1){
+    if(!document.getElementById('reg-club-name').value.trim()){showAuthError('Nom du club requis');return;}
+  }
+  if (step===2){
+    if(!document.getElementById('reg-firstname').value.trim()){showAuthError('Prénom requis');return;}
+    if(!document.getElementById('reg-email').value.trim()){showAuthError('Email requis');return;}
+    if(document.getElementById('reg-password').value.length<8){showAuthError('Mot de passe trop court');return;}
+  }
+  document.getElementById('reg-step-'+step).classList.remove('active');
+  document.getElementById('reg-step-'+(step+1)).classList.add('active');
+  document.getElementById('rstep-'+step).classList.remove('active');
+  document.getElementById('rstep-'+step).classList.add('done');
+  document.getElementById('rstep-'+(step+1)).classList.add('active');
+}
+function regBack(step) {
+  document.getElementById('reg-step-'+step).classList.remove('active');
+  document.getElementById('reg-step-'+(step-1)).classList.add('active');
+  document.getElementById('rstep-'+step).classList.remove('active');
+  document.getElementById('rstep-'+(step-1)).classList.remove('done');
+  document.getElementById('rstep-'+(step-1)).classList.add('active');
+}
+function selectPlan(plan) {
+  state.selectedPlan=plan;
+  document.querySelectorAll('.plan-option').forEach(el=>{
+    el.style.borderColor = el.dataset.plan===plan?'var(--ember)':'var(--border)';
+    el.style.background = el.dataset.plan===plan?'var(--ember-dim)':'var(--steel)';
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DATA LOADERS
+// ═══════════════════════════════════════════════════════════════
+async function loadStages() {
+  if(DEMO_MODE){state.stages=[...demoData.stages];return;}
+  const{data}=await sb.from('pipeline_stages').select('*').eq('club_id',state.currentClub.id).order('position');
+  state.stages=data||[];
+}
+async function loadTeam() {
+  if(DEMO_MODE){state.team=[...demoData.team];return;}
+  const{data}=await sb.from('users').select('*').eq('club_id',state.currentClub.id).eq('is_active',true);
+  state.team=data||[];
+}
+async function loadProspects() {
+  if(DEMO_MODE){state.prospects=[...demoData.prospects];return;}
+  const{data}=await sb.from('prospects').select('*').eq('club_id',state.currentClub.id).order('created_at',{ascending:false});
+  state.prospects=data||[];
+}
+async function loadRDVs() {
+  if(DEMO_MODE){state.rdvs=[...demoData.rdvs];return;}
+  const{data}=await sb.from('appointments').select('*').eq('club_id',state.currentClub.id).order('scheduled_at');
+  state.rdvs=data||[];
+}
+async function loadAutomations() {
+  if(DEMO_MODE){state.automations=[...demoData.automations];return;}
+  const{data}=await sb.from('automations').select('*').eq('club_id',state.currentClub.id);
+  state.automations=data||[];
+}
+async function loadActivity() {
+  if(DEMO_MODE){state.activity=[...demoData.activity];return;}
+  const{data}=await sb.from('activity_feed').select('*').eq('club_id',state.currentClub.id).order('created_at',{ascending:false}).limit(20);
+  state.activity=data||[];
+}
+async function loadTimeline(prospectId) {
+  if(DEMO_MODE){return[{type:'prospect',text:'Prospect créé',created_at:new Date(Date.now()-86400000*7).toISOString()},{type:'email',text:'Email de bienvenue envoyé automatiquement',created_at:new Date(Date.now()-86400000*7+300000).toISOString()}];}
+  const{data}=await sb.from('prospect_timeline').select('*, users(firstname,lastname)').eq('prospect_id',prospectId).order('created_at',{ascending:false});
+  return data||[];
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DB WRITES
+// ═══════════════════════════════════════════════════════════════
+async function dbInsertProspect(p) {
+  if(DEMO_MODE){p.id='p'+Date.now();state.prospects.unshift(p);return p;}
+  const{data,error}=await sb.from('prospects').insert([p]).select().single();
+  if(error) throw error;
+  state.prospects.unshift(data); return data;
+}
+async function dbUpdateProspect(id,updates) {
+  if(DEMO_MODE){const i=state.prospects.findIndex(p=>p.id===id);if(i>=0)state.prospects[i]={...state.prospects[i],...updates};return state.prospects[i];}
+  const{data,error}=await sb.from('prospects').update(updates).eq('id',id).eq('club_id',state.currentClub.id).select().single();
+  if(error) throw error;
+  const i=state.prospects.findIndex(p=>p.id===id);if(i>=0)state.prospects[i]=data; return data;
+}
+async function dbDeleteProspect(id) {
+  if(DEMO_MODE){state.prospects=state.prospects.filter(p=>p.id!==id);return;}
+  await sb.from('prospects').delete().eq('id',id).eq('club_id',state.currentClub.id);
+  state.prospects=state.prospects.filter(p=>p.id!==id);
+}
+async function dbAddTimeline(prospectId,type,text,detail='') {
+  const entry={prospect_id:prospectId,club_id:state.currentClub?.id||'demo-club',user_id:state.currentUser?.id||null,type,text,detail};
+  if(DEMO_MODE) return entry;
+  await sb.from('prospect_timeline').insert([entry]);
+}
+async function dbAddActivity(text,color='#ff4c00') {
+  const entry={club_id:state.currentClub?.id||'demo-club',user_id:state.currentUser?.id||null,text,color,created_at:new Date().toISOString()};
+  state.activity.unshift(entry);
+  if(state.activity.length>20) state.activity.pop();
+  if(DEMO_MODE) return;
+  await sb.from('activity_feed').insert([{club_id:state.currentClub.id,user_id:state.currentUser?.id,text,color}]);
+}
+async function dbInsertRDV(rdv) {
+  if(DEMO_MODE){rdv.id='r'+Date.now();state.rdvs.push(rdv);return rdv;}
+  const{data,error}=await sb.from('appointments').insert([rdv]).select().single();
+  if(error) throw error;
+  state.rdvs.push(data); return data;
+}
+async function dbDeleteRDV(id) {
+  if(DEMO_MODE){state.rdvs=state.rdvs.filter(r=>r.id!==id);return;}
+  await sb.from('appointments').delete().eq('id',id).eq('club_id',state.currentClub.id);
+  state.rdvs=state.rdvs.filter(r=>r.id!==id);
+}
+async function dbInsertAutomation(auto) {
+  if(DEMO_MODE){auto.id='a'+Date.now();state.automations.push(auto);return auto;}
+  const{data,error}=await sb.from('automations').insert([auto]).select().single();
+  if(error) throw error;
+  state.automations.push(data); return data;
+}
+async function dbUpdateAutomation(id,updates) {
+  if(DEMO_MODE){const i=state.automations.findIndex(a=>a.id===id);if(i>=0)state.automations[i]={...state.automations[i],...updates};return;}
+  await sb.from('automations').update(updates).eq('id',id).eq('club_id',state.currentClub.id);
+  const i=state.automations.findIndex(a=>a.id===id);
+  if(i>=0)state.automations[i]={...state.automations[i],...updates};
+}
+async function dbDeleteAutomation(id) {
+  if(DEMO_MODE){state.automations=state.automations.filter(a=>a.id!==id);return;}
+  await sb.from('automations').delete().eq('id',id).eq('club_id',state.currentClub.id);
+  state.automations=state.automations.filter(a=>a.id!==id);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+function navigate(page,data) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page)?.classList.add('active');
+  const navEl=document.querySelector('.nav-item[data-page="'+page+'"]');
+  if(navEl) navEl.classList.add('active');
+  const titles={dashboard:'Dashboard',pipeline:'Pipeline',prospects:'Prospects',automations:'Automatisations',calendar:'Calendrier',analytics:'Analytics',import:'Import / Export',settings:'Paramètres','prospect-detail':'Fiche prospect'};
+  document.getElementById('topbar-title').textContent=titles[page]||page.toUpperCase();
+  state.currentPage=page;
+  syncBottomNav(page); updateMobileSearchBar(page); closeMobileSidebar();
+  if(page==='dashboard') renderDashboard();
+  if(page==='pipeline') renderPipeline();
+  if(page==='prospects') renderProspects();
+  if(page==='automations') renderAutomations();
+  if(page==='analytics') renderAnalytics();
+  if(page==='calendar') renderCalendar();
+  if(page==='prospect-detail'&&data) renderProspectDetail(data);
+  if(page==='settings') renderSettings();
+  updateBadges();
+}
+function updateBadges() {
+  const n=state.prospects.filter(p=>p.status==='nouveau').length;
+  const bp=document.getElementById('badge-pipeline');
+  if(bp){bp.textContent=n;bp.style.display=n>0?'':'none';}
+  const bb=document.getElementById('bnav-badge');
+  if(bb){bb.textContent=n;bb.style.display=n>0?'flex':'none';}
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════════
+function renderDashboard() {
+  const ps=state.prospects,total=ps.length;
+  const convertis=ps.filter(p=>p.status==='converti').length;
+  const nouveaux=ps.filter(p=>p.status==='nouveau').length;
+  const rate=total>0?Math.round(convertis/total*100):0;
+  document.getElementById('kpi-grid').innerHTML=[
+    {label:'Total prospects',value:total,delta:'+12% ce mois',up:true,icon:'👥',page:'prospects'},
+    {label:'Convertis',value:convertis,delta:rate+'% taux',up:true,icon:'✅',page:'prospects'},
+    {label:'Nouveaux',value:nouveaux,delta:'À traiter',up:false,icon:'🆕',page:'pipeline'},
+    {label:'RDV planifiés',value:state.rdvs.filter(r=>r.status==='scheduled').length,delta:'À venir',up:true,icon:'📅',page:'calendar'},
+  ].map(k=>`<div class="kpi-card" onclick="navigate('${k.page}')"><div class="kpi-icon">${k.icon}</div><div class="kpi-label">${k.label}</div><div class="kpi-value">${k.value}</div><div class="kpi-delta ${k.up?'up':'down'}">${k.up?'↑':'↓'} ${k.delta}</div></div>`).join('');
+  const months=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+  const vals=[12,18,15,22,28,19,31,24,28,35,22,total];
+  const convs=[4,7,5,9,12,8,14,10,11,15,9,convertis];
+  const maxV=Math.max(...vals,1);
+  let ch='',lb='';
+  vals.forEach((v,i)=>{
+    ch+=`<div class="chart-bar-group"><div class="c-bar" style="height:${Math.round(v/maxV*130)}px;background:rgba(255,76,0,0.7);"></div><div class="c-bar" style="height:${Math.round(convs[i]/maxV*130)}px;background:rgba(34,197,94,0.7);"></div></div>`;
+    lb+=`<div class="chart-label">${months[i]}</div>`;
+  });
+  document.getElementById('chart-prospects').innerHTML=ch;
+  document.getElementById('chart-labels').innerHTML=lb;
+  const funnelStages=[
+    {label:'Entrants',count:total},
+    {label:'Contactés',count:ps.filter(p=>['contacte','visite','offre','converti'].includes(p.status)).length},
+    {label:'En visite',count:ps.filter(p=>['visite','offre','converti'].includes(p.status)).length},
+    {label:'Convertis',count:convertis},
+  ];
+  const fc=['#ff4c00','#c8943a','#3b82f6','#22c55e'];
+  document.getElementById('funnel').innerHTML=funnelStages.map((s,i)=>{
+    const pct=total>0?Math.round(s.count/total*100):0;
+    return `<div class="funnel-row"><div class="funnel-label">${s.label}</div><div class="funnel-bar-wrap"><div class="funnel-bar" style="width:${pct}%;background:${fc[i]}"><span class="funnel-pct">${pct}%</span></div></div><div class="funnel-count">${s.count}</div></div>`;
+  }).join('');
+  document.getElementById('activity-list').innerHTML=state.activity.slice(0,5).map(a=>
+    `<div class="activity-item"><div class="act-dot" style="background:${a.color}"></div><div class="act-text">${a.text}</div><div class="act-time">${formatRelTime(a.created_at)}</div></div>`
+  ).join('')||'<div style="padding:20px;text-align:center;color:var(--ash);font-size:13px;">Aucune activité récente</div>';
+  const sources={};
+  ps.forEach(p=>{sources[p.source]=(sources[p.source]||0)+1;});
+  const srcColors={'Facebook Ads':'#3b5998','Google Ads':'#ea4335','Site web':'#ff4c00','Instagram':'#e1306c','Parrainage':'#22c55e','Téléphone':'#c8943a','Passage direct':'#6b6b7a','Autre':'#3b82f6'};
+  document.getElementById('sources-chart').innerHTML=Object.entries(sources).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([src,cnt])=>{
+    const pct=Math.round(cnt/total*100);
+    return `<div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:12px;color:var(--muted);">${src}</span><span style="font-size:12px;font-weight:700;color:var(--light);">${cnt}</span></div><div style="height:6px;background:var(--steel);overflow:hidden;"><div style="height:100%;width:${pct}%;background:${srcColors[src]||'#ff4c00'}"></div></div></div>`;
+  }).join('')||'<div style="color:var(--ash);font-size:13px;">Aucune donnée</div>';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PIPELINE
+// ═══════════════════════════════════════════════════════════════
+function renderPipeline() {
+  const wrap=document.getElementById('kanban-wrap');
+  wrap.innerHTML='';
+  state.stages.forEach(stage=>{
+    const cards=state.prospects.filter(p=>p.status===stage.slug||p.status===stage.id);
+    const col=document.createElement('div');
+    col.className='kanban-col';
+    col.innerHTML=`<div class="kanban-col-header"><div class="col-name"><div class="col-dot" style="background:${stage.color}"></div>${stage.name}</div><div class="col-count">${cards.length}</div></div>
+    <div class="kanban-cards">${cards.map(p=>kanbanCard(p,stage.color)).join('')||'<div style="padding:12px;text-align:center;color:var(--ash);font-size:12px;">Vide</div>'}</div>
+    <div class="add-col-btn" onclick="quickAddToStage('${stage.slug||stage.id}')">+ Ajouter</div>`;
+    wrap.appendChild(col);
+  });
+}
+function kanbanCard(p,color) {
+  const hot=p.score>=70?'<span class="tag tag-ember">CHAUD</span>':'';
+  return `<div class="k-card" onclick="navigate('prospect-detail','${p.id}')">
+    <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${color}"></div>
+    <div class="k-card-name">${p.firstname} ${p.lastname}</div>
+    <div class="k-card-meta">${p.goal||''} · ${p.source}</div>
+    <div class="k-card-tags">${hot}<span class="tag tag-gray">${p.source}</span>${p.budget?'<span class="tag tag-gold">'+p.budget+'</span>':''}</div>
+    <div class="k-card-foot"><div class="score-bar"><div class="score-fill" style="width:${p.score||50}%"></div></div><div class="k-card-date">${formatDate(p.created_at)}</div></div>
+  </div>`;
+}
+function quickAddToStage(slug) { populateStagesSelect('p-status',slug); openModal('modal-add-prospect'); }
+
+// ═══════════════════════════════════════════════════════════════
+// PROSPECTS TABLE
+// ═══════════════════════════════════════════════════════════════
+function renderProspects() {
+  const stageMap={};
+  state.stages.forEach(s=>{stageMap[s.slug]=s;stageMap[s.id]=s;});
+  const statuses=['all',...state.stages.map(s=>s.slug)];
+  const labels={all:'Tous'}; state.stages.forEach(s=>{labels[s.slug]=s.name;});
+  document.getElementById('filter-buttons').innerHTML=statuses.map(s=>{
+    const cnt=s==='all'?state.prospects.length:state.prospects.filter(p=>p.status===s).length;
+    const stage=stageMap[s]; const col=stage?.color;
+    const isActive=state.filterStatus===s;
+    return `<button class="btn btn-ghost btn-sm" onclick="filterProspects('${s}')" style="${isActive&&col?'background:'+col+'22;color:'+col+';border-color:'+col+'44;':isActive?'background:var(--ember);color:white;border-color:var(--ember);':''}">${labels[s]||s} <span style="opacity:0.7">${cnt}</span></button>`;
+  }).join('');
+  const searchEl=isMobile()?document.getElementById('mobile-search'):document.getElementById('global-search');
+  const search=(searchEl?.value||'').toLowerCase();
+  let filtered=state.filterStatus==='all'?[...state.prospects]:state.prospects.filter(p=>p.status===state.filterStatus);
+  if(search) filtered=filtered.filter(p=>(p.firstname+' '+p.lastname+' '+(p.email||'')+' '+(p.phone||'')+' '+p.source).toLowerCase().includes(search));
+  filtered.sort((a,b)=>{
+    let va=a[state.sortCol]||'',vb=b[state.sortCol]||'';
+    if(typeof va==='string'){va=va.toLowerCase();vb=vb.toLowerCase();}
+    return va<vb?state.sortDir:va>vb?-state.sortDir:0;
+  });
+  document.getElementById('prospects-tbody').innerHTML=filtered.length===0
+    ?'<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--ash);">Aucun prospect trouvé</td></tr>'
+    :filtered.map(p=>{
+      const stage=stageMap[p.status];
+      const member=state.team.find(t=>t.id===p.assignee_id);
+      return `<tr onclick="navigate('prospect-detail','${p.id}')">
+        <td><div style="font-weight:600;color:var(--white);">${p.firstname} ${p.lastname}</div>${member?'<div style="font-size:11px;color:var(--ash);">'+member.firstname+' '+member.lastname+'</div>':''}</td>
+        <td class="col-hide-mobile"><span style="color:var(--muted);font-size:12px;">${p.email||'—'}</span></td>
+        <td class="col-hide-mobile"><span style="font-family:monospace;font-size:12px;color:var(--muted);">${p.phone||'—'}</span></td>
+        <td><span class="tag tag-gray">${p.source}</span></td>
+        <td><span class="tag" style="background:${stage?.color||'#6b6b7a'}22;color:${stage?.color||'#6b6b7a'}">${stage?.name||p.status}</span></td>
+        <td class="col-hide-mobile"><div style="display:flex;align-items:center;gap:8px;"><div style="width:50px;height:4px;background:var(--steel);overflow:hidden;"><div style="height:100%;width:${p.score||50}%;background:var(--ember)"></div></div><span style="font-size:12px;font-weight:700;color:var(--light);">${p.score||50}</span></div></td>
+        <td class="col-hide-mobile"><span style="font-size:12px;color:var(--ash);">${formatDate(p.created_at)}</span></td>
+        <td onclick="event.stopPropagation()"><div style="display:flex;gap:4px;"><button class="btn btn-ghost btn-sm btn-icon" onclick="editProspect('${p.id}')">✏️</button><button class="btn btn-ghost btn-sm btn-icon" onclick="deleteProspect('${p.id}')">🗑️</button></div></td>
+      </tr>`;
+    }).join('');
+}
+function filterProspects(s){state.filterStatus=s;renderProspects();}
+function sortTable(col){if(state.sortCol===col)state.sortDir*=-1;else{state.sortCol=col;state.sortDir=1;}renderProspects();}
+function globalSearch(v){
+  const gs=document.getElementById('global-search'),ms=document.getElementById('mobile-search');
+  if(gs&&gs.value!==v)gs.value=v;if(ms&&ms.value!==v)ms.value=v;
+  if(state.currentPage==='prospects')renderProspects();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PROSPECT DETAIL
+// ═══════════════════════════════════════════════════════════════
+async function renderProspectDetail(id) {
+  state.currentProspectId=id;
+  const p=state.prospects.find(x=>x.id===id);
+  if(!p) return;
+  const stageMap={}; state.stages.forEach(s=>{stageMap[s.slug]=s;stageMap[s.id]=s;});
+  const stage=stageMap[p.status];
+  const member=state.team.find(t=>t.id===p.assignee_id);
+  const tlIcons={prospect:'🧑',email:'📧',sms:'💬',call:'📞',visit:'🏋️',offer:'📄',note:'📝',status:'🔄'};
+  const tlColors={prospect:'#6b6b7a',email:'#3b82f6',sms:'#c8943a',call:'#22c55e',visit:'#ff4c00',offer:'#c8943a',note:'#6b6b7a',status:'#eab308'};
+  document.getElementById('prospect-detail-content').innerHTML='<div class="loader-wrap"><div class="spinner"></div><div class="loader-text">Chargement...</div></div>';
+  const timeline=await loadTimeline(id);
+  document.getElementById('prospect-detail-content').innerHTML=`
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="prospect-header">
+        <div class="prospect-avatar">${p.firstname[0]}${p.lastname[0]}</div>
+        <div style="flex:1;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;color:var(--white);">${p.firstname} ${p.lastname}</div>
+          <div style="font-size:13px;color:var(--ash);margin-top:2px;">${p.email||''} ${p.phone?'· '+p.phone:''}</div>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+            <span class="tag" style="background:${stage?.color||'#6b6b7a'}22;color:${stage?.color||'#6b6b7a'}">${stage?.name||p.status}</span>
+            <span class="tag tag-gray">${p.source}</span>
+            ${p.goal?'<span class="tag tag-blue">'+p.goal+'</span>':''}
+          </div>
+        </div>
+        <div class="score-big"><div class="score-big-num">${p.score||50}</div><div class="score-big-label">Score</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Informations</span><button class="btn btn-ghost btn-sm" onclick="editProspect('${p.id}')">✏️ Modifier</button></div>
+        <div class="info-grid">
+          <div><div class="info-label">Email</div><div class="info-value">${p.email||'—'}</div></div>
+          <div><div class="info-label">Téléphone</div><div class="info-value">${p.phone||'—'}</div></div>
+          <div><div class="info-label">Source</div><div class="info-value">${p.source}</div></div>
+          <div><div class="info-label">Objectif</div><div class="info-value">${p.goal||'—'}</div></div>
+          <div><div class="info-label">Budget</div><div class="info-value">${p.budget||'—'}</div></div>
+          <div><div class="info-label">Commercial</div><div class="info-value">${member?member.firstname+' '+member.lastname:'—'}</div></div>
+          <div><div class="info-label">Créé le</div><div class="info-value">${formatDate(p.created_at)}</div></div>
+          <div><div class="info-label">Statut</div>
+            <select style="background:none;border:none;outline:none;cursor:pointer;color:${stage?.color||'#6b6b7a'};font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;" onchange="changeStatus('${p.id}',this.value)">
+              ${state.stages.map(s=>'<option value="'+s.slug+'" '+(p.status===s.slug||p.status===s.id?'selected':'')+'>'+s.name+'</option>').join('')}
+            </select>
+          </div>
+        </div>
+        ${p.notes?'<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);"><div class="info-label" style="margin-bottom:6px;">Notes</div><div style="font-size:13px;color:var(--muted);line-height:1.6;">'+p.notes+'</div></div>':''}
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Actions rapides</span></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" onclick="addQuickActivity('${p.id}','email','Email envoyé')">📧 Email</button>
+          <button class="btn btn-ghost btn-sm" onclick="addQuickActivity('${p.id}','sms','SMS envoyé')">💬 SMS</button>
+          <button class="btn btn-ghost btn-sm" onclick="addQuickActivity('${p.id}','call','Appel passé')">📞 Appel</button>
+          <button class="btn btn-primary btn-sm" onclick="openRDVForProspect('${p.id}')">📅 RDV</button>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Historique & activité</span></div>
+        <div class="note-input-wrap">
+          <textarea class="note-input" id="note-input-${p.id}" placeholder="Ajouter une note..."></textarea>
+          <button class="btn btn-primary btn-sm" onclick="addNote('${p.id}')">+</button>
+        </div>
+        <div class="timeline">
+          ${timeline.map(t=>`<div class="tl-item">
+            <div class="tl-dot" style="background:${tlColors[t.type]||'#6b6b7a'}22;border:1px solid ${tlColors[t.type]||'#6b6b7a'}44;">${tlIcons[t.type]||'•'}</div>
+            <div class="tl-content"><div class="tl-title">${t.text}</div>${t.detail?'<div class="tl-text">'+t.detail+'</div>':''}<div class="tl-time">${formatRelTime(t.created_at)}</div></div>
+          </div>`).join('')||'<div style="color:var(--ash);font-size:13px;padding:12px 0;">Aucune activité</div>'}
+        </div>
+      </div>
+    </div>`;
+}
+
+async function addNote(id) {
+  const input=document.getElementById('note-input-'+id);
+  const text=input.value.trim(); if(!text) return;
+  await dbAddTimeline(id,'note',text);
+  await dbAddActivity('Note ajoutée sur <strong>'+getProspectName(id)+'</strong>','#6b6b7a');
+  input.value=''; renderProspectDetail(id); toast('Note ajoutée ✓');
+}
+async function addQuickActivity(id,type,label) {
+  await dbAddTimeline(id,type,label);
+  await dbAddActivity('<strong>'+getProspectName(id)+'</strong> — '+label,type==='email'?'#3b82f6':type==='sms'?'#c8943a':'#22c55e');
+  renderProspectDetail(id); toast(label+' ✓');
+}
+async function changeStatus(id,newStatus) {
+  try {
+    await dbUpdateProspect(id,{status:newStatus});
+    const stage=state.stages.find(s=>s.slug===newStatus);
+    await dbAddTimeline(id,'status','Statut → '+(stage?.name||newStatus));
+    await dbAddActivity('<strong>'+getProspectName(id)+'</strong> → '+(stage?.name||newStatus),stage?.color||'#c8943a');
+    renderProspectDetail(id); toast('Statut mis à jour ✓');
+  } catch(e){toast(e.message,'error');}
+}
+function openRDVForProspect(id) {
+  populateProspectSelects();
+  document.getElementById('rdv-prospect').value=id;
+  document.getElementById('rdv-date').value=state.selectedDate;
+  openModal('modal-add-rdv');
+}
+function getProspectName(id) {
+  const p=state.prospects.find(x=>x.id===id);
+  return p?p.firstname+' '+p.lastname:'—';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CRUD PROSPECTS
+// ═══════════════════════════════════════════════════════════════
+async function saveProspect() {
+  const fn=document.getElementById('p-firstname').value.trim();
+  const ln=document.getElementById('p-lastname').value.trim();
+  if(!fn||!ln){toast('Prénom et nom requis','error');return;}
+  const btn=document.getElementById('btn-save-prospect'); btn.disabled=true;
+  try {
+    const p={
+      club_id:state.currentClub?.id||'demo-club',
+      firstname:fn,lastname:ln,
+      email:document.getElementById('p-email').value.trim(),
+      phone:document.getElementById('p-phone').value.trim(),
+      source:document.getElementById('p-source').value,
+      status:document.getElementById('p-status').value,
+      goal:document.getElementById('p-goal').value,
+      budget:document.getElementById('p-budget').value,
+      score:parseInt(document.getElementById('p-score').value)||50,
+      assignee_id:document.getElementById('p-assignee').value||null,
+      notes:document.getElementById('p-notes').value.trim(),
+    };
+    const saved=await dbInsertProspect(p);
+    await dbAddTimeline(saved.id,'prospect','Prospect créé via '+p.source);
+    await dbAddActivity('Nouveau prospect <strong>'+p.firstname+' '+p.lastname+'</strong>','#ff4c00');
+    closeModal('modal-add-prospect');
+    ['p-firstname','p-lastname','p-email','p-phone','p-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    if(state.currentPage==='pipeline')renderPipeline();
+    else if(state.currentPage==='prospects')renderProspects();
+    else renderDashboard();
+    updateBadges(); toast('Prospect créé ✓','success');
+  } catch(e){toast(e.message,'error');}
+  btn.disabled=false;
+}
+function editProspect(id) {
+  const p=state.prospects.find(x=>x.id===id); if(!p) return;
+  document.getElementById('ep-id').value=p.id;
+  ['firstname','lastname','email','phone','notes'].forEach(f=>{document.getElementById('ep-'+f).value=p[f]||'';});
+  document.getElementById('ep-source').value=p.source;
+  document.getElementById('ep-goal').value=p.goal||'Remise en forme';
+  document.getElementById('ep-budget').value=p.budget||'30-50€';
+  document.getElementById('ep-score').value=p.score||50;
+  populateStagesSelect('ep-status',p.status);
+  populateTeamSelect('ep-assignee',p.assignee_id);
+  openModal('modal-edit-prospect');
+}
+async function updateProspect() {
+  const id=document.getElementById('ep-id').value;
+  try {
+    const updates={
+      firstname:document.getElementById('ep-firstname').value.trim(),
+      lastname:document.getElementById('ep-lastname').value.trim(),
+      email:document.getElementById('ep-email').value.trim(),
+      phone:document.getElementById('ep-phone').value.trim(),
+      source:document.getElementById('ep-source').value,
+      status:document.getElementById('ep-status').value,
+      goal:document.getElementById('ep-goal').value,
+      budget:document.getElementById('ep-budget').value,
+      score:parseInt(document.getElementById('ep-score').value)||50,
+      assignee_id:document.getElementById('ep-assignee').value||null,
+      notes:document.getElementById('ep-notes').value.trim(),
+    };
+    await dbUpdateProspect(id,updates);
+    closeModal('modal-edit-prospect');
+    if(state.currentPage==='prospect-detail')renderProspectDetail(id);
+    else if(state.currentPage==='prospects')renderProspects();
+    else if(state.currentPage==='pipeline')renderPipeline();
+    toast('Prospect mis à jour ✓','success');
+  } catch(e){toast(e.message,'error');}
+}
+async function deleteProspect(id) {
+  if(!confirm('Supprimer ce prospect définitivement ?')) return;
+  try {
+    await dbDeleteProspect(id);
+    closeModal('modal-edit-prospect');
+    navigate('prospects');
+    toast('Prospect supprimé');
+  } catch(e){toast(e.message,'error');}
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AUTOMATIONS
+// ═══════════════════════════════════════════════════════════════
+function renderAutomations() {
+  const icons={email:'📧',sms:'💬',notif:'🔔',task:'📌'};
+  document.getElementById('automations-grid').innerHTML=state.automations.map(a=>`
+    <div class="auto-card ${a.is_enabled?'enabled':''}">
+      <div style="position:absolute;top:16px;right:16px;"><div class="toggle ${a.is_enabled?'on':''}" onclick="toggleAuto('${a.id}')"></div></div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--white);margin-bottom:6px;margin-top:4px;padding-right:50px;">${a.name}</div>
+      <div style="font-size:13px;color:var(--ash);line-height:1.6;margin-bottom:12px;">${a.description||''}</div>
+      <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ash);font-weight:700;font-family:'Barlow Condensed',sans-serif;margin-bottom:8px;">
+        Déclencheur: <span style="color:var(--ember)">${a.trigger_type}</span>${a.source_filter?' · '+a.source_filter:''}${a.run_count>0?' <span style="color:var(--green)">· '+a.run_count+' exec.</span>':''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">
+        ${(a.steps||[]).map((s,i)=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);"><span>${icons[s.type]||'⚡'}</span>${i>0?'<span style="color:var(--ember);font-weight:700;">→</span>':''}<span>${s.msg}</span></div>`).join('')}
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-ghost btn-sm" onclick="editAutomation('${a.id}')">✏️ Modifier</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteAutomation('${a.id}')">🗑️</button>
+      </div>
+    </div>`).join('')||'<div style="color:var(--ash);padding:20px;">Aucune séquence</div>';
+}
+async function toggleAuto(id) {
+  const a=state.automations.find(x=>x.id===id); if(!a) return;
+  await dbUpdateAutomation(id,{is_enabled:!a.is_enabled});
+  renderAutomations();
+  toast(!a.is_enabled?'"'+a.name+'" activée ✓':'"'+a.name+'" désactivée',!a.is_enabled?'success':'');
+}
+async function deleteAutomation(id) {
+  if(!confirm('Supprimer cette séquence ?')) return;
+  await dbDeleteAutomation(id); renderAutomations(); toast('Séquence supprimée');
+}
+function editAutomation(id) {
+  const a=state.automations.find(x=>x.id===id); if(!a) return;
+  document.getElementById('auto-name').value=a.name;
+  document.getElementById('auto-desc').value=a.description||'';
+  document.getElementById('auto-trigger').value=a.trigger_type;
+  document.getElementById('auto-source').value=a.source_filter||'';
+  state.autoStepCount=0;
+  document.getElementById('auto-steps-list').innerHTML='';
+  (a.steps||[]).forEach(s=>addAutoStep(s));
+  openModal('modal-add-automation');
+}
+function addAutoStep(existing) {
+  state.autoStepCount++;
+  const id='step-'+state.autoStepCount;
+  const div=document.createElement('div'); div.id=id;
+  div.innerHTML=`<div style="display:flex;gap:8px;align-items:center;background:var(--steel);padding:10px 12px;border:1px solid var(--border);">
+    <select class="form-select" style="width:120px;flex-shrink:0;" id="${id}-type">
+      <option value="email" ${existing?.type==='email'?'selected':''}>📧 Email</option>
+      <option value="sms" ${existing?.type==='sms'?'selected':''}>💬 SMS</option>
+      <option value="notif" ${existing?.type==='notif'?'selected':''}>🔔 Notif</option>
+      <option value="task" ${existing?.type==='task'?'selected':''}>📌 Tâche</option>
+    </select>
+    <input class="form-input" placeholder="Description..." value="${existing?.msg||''}" id="${id}-msg" style="flex:1;">
+    <button class="btn btn-danger btn-sm btn-icon" onclick="document.getElementById('${id}').remove()">✕</button>
+  </div>`;
+  document.getElementById('auto-steps-list').appendChild(div);
+}
+async function saveAutomation() {
+  const name=document.getElementById('auto-name').value.trim();
+  if(!name){toast('Nom requis','error');return;}
+  const steps=[];
+  document.querySelectorAll('[id^="step-"]').forEach(div=>{
+    const type=div.querySelector('[id$="-type"]')?.value;
+    const msg=div.querySelector('[id$="-msg"]')?.value.trim();
+    if(type&&msg) steps.push({type,delay:0,msg});
+  });
+  await dbInsertAutomation({club_id:state.currentClub?.id||'demo-club',name,trigger_type:document.getElementById('auto-trigger').value,source_filter:document.getElementById('auto-source').value,description:document.getElementById('auto-desc').value.trim(),steps,is_enabled:false,run_count:0});
+  closeModal('modal-add-automation'); renderAutomations(); toast('Séquence créée ✓','success');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CALENDAR
+// ═══════════════════════════════════════════════════════════════
+function renderCalendar() {
+  const months=['JANVIER','FÉVRIER','MARS','AVRIL','MAI','JUIN','JUILLET','AOÛT','SEPTEMBRE','OCTOBRE','NOVEMBRE','DÉCEMBRE'];
+  document.getElementById('cal-month-title').textContent=months[state.calMonth]+' '+state.calYear;
+  const firstDay=(new Date(state.calYear,state.calMonth,1).getDay()+6)%7;
+  const daysInMonth=new Date(state.calYear,state.calMonth+1,0).getDate();
+  const today=new Date().toISOString().split('T')[0];
+  const eventDays={};
+  state.rdvs.forEach(r=>{const d=(r.scheduled_at||r.date||'').split('T')[0];if(d) eventDays[d]=(eventDays[d]||0)+1;});
+  const prevDays=new Date(state.calYear,state.calMonth,0).getDate();
+  let html='';
+  for(let i=firstDay-1;i>=0;i--) html+=`<div class="cal-day other-month"><span>${prevDays-i}</span></div>`;
+  for(let day=1;day<=daysInMonth;day++) {
+    const ds=state.calYear+'-'+String(state.calMonth+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+    html+=`<div class="cal-day ${ds===today?'today':''} ${ds===state.selectedDate?'selected':''} ${eventDays[ds]?'has-events':''}" onclick="selectDate('${ds}')"><span>${day}</span>${eventDays[ds]?'<div class="cal-event-dot"></div>':''}</div>`;
+  }
+  document.getElementById('cal-days').innerHTML=html;
+  renderRDVs();
+}
+function selectDate(date) {
+  state.selectedDate=date;
+  const d=new Date(date+'T12:00:00');
+  const days=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  document.getElementById('selected-date-label').textContent=days[d.getDay()]+' '+d.getDate()+'/'+(d.getMonth()+1);
+  renderCalendar();
+}
+function renderRDVs() {
+  const rdvs=state.rdvs.filter(r=>(r.scheduled_at||r.date||'').split('T')[0]===state.selectedDate)
+    .sort((a,b)=>(a.scheduled_at||a.date)<(b.scheduled_at||b.date)?-1:1);
+  if(!rdvs.length){document.getElementById('rdv-list').innerHTML='<div style="text-align:center;padding:30px;color:var(--ash);font-size:13px;">Aucun RDV ce jour</div>';return;}
+  document.getElementById('rdv-list').innerHTML=rdvs.map(r=>{
+    const p=state.prospects.find(x=>x.id===(r.prospect_id||r.prospectId));
+    const time=r.scheduled_at?new Date(r.scheduled_at).toLocaleTimeString('fr',{hour:'2-digit',minute:'2-digit'}):r.time||'';
+    return `<div class="rdv-item" onclick="confirmDeleteRDV('${r.id}')">
+      <div class="rdv-time">${time}</div>
+      <div class="rdv-name">${r.title}${p?' — '+p.firstname+' '+p.lastname:''}</div>
+      <div class="rdv-meta">${r.type} · ${r.duration_minutes||r.duration||30}min</div>
+      ${r.notes?'<div style="font-size:11px;color:var(--ash);margin-top:4px;">'+r.notes+'</div>':''}
+    </div>`;
+  }).join('');
+}
+function calPrev(){state.calMonth--;if(state.calMonth<0){state.calMonth=11;state.calYear--;}renderCalendar();}
+function calNext(){state.calMonth++;if(state.calMonth>11){state.calMonth=0;state.calYear++;}renderCalendar();}
+function calToday(){state.calYear=new Date().getFullYear();state.calMonth=new Date().getMonth();state.selectedDate=new Date().toISOString().split('T')[0];renderCalendar();}
+async function saveRDV() {
+  const title=document.getElementById('rdv-title').value.trim();
+  const date=document.getElementById('rdv-date').value;
+  const time=document.getElementById('rdv-time').value;
+  if(!title||!date||!time){toast('Titre, date et heure requis','error');return;}
+  const prospectId=document.getElementById('rdv-prospect').value;
+  try {
+    await dbInsertRDV({club_id:state.currentClub?.id||'demo-club',title,scheduled_at:new Date(date+'T'+time+':00').toISOString(),type:document.getElementById('rdv-type').value,prospect_id:prospectId||null,user_id:state.currentUser?.id||null,duration_minutes:parseInt(document.getElementById('rdv-duration').value)||30,notes:document.getElementById('rdv-notes').value.trim(),status:'scheduled'});
+    if(prospectId) await dbAddTimeline(prospectId,'visit','RDV planifié : '+title);
+    await dbAddActivity('RDV planifié : <strong>'+title+'</strong>','#c8943a');
+    closeModal('modal-add-rdv');
+    state.selectedDate=date; renderCalendar(); toast('RDV créé ✓','success');
+  } catch(e){toast(e.message,'error');}
+}
+async function confirmDeleteRDV(id) {
+  if(!confirm('Supprimer ce RDV ?')) return;
+  await dbDeleteRDV(id); renderCalendar(); toast('RDV supprimé');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ANALYTICS
+// ═══════════════════════════════════════════════════════════════
+function renderAnalytics() {
+  const ps=state.prospects,total=ps.length;
+  const convertis=ps.filter(p=>p.status==='converti').length;
+  const rate=total>0?Math.round(convertis/total*100):0;
+  const avgScore=total>0?Math.round(ps.reduce((a,p)=>a+(p.score||50),0)/total):0;
+  document.getElementById('analytics-kpis').innerHTML=[
+    {label:'Taux de conversion',value:rate+'%',icon:'📈'},
+    {label:'Score moyen',value:avgScore,icon:'⭐'},
+    {label:'RDV planifiés',value:state.rdvs.length,icon:'📅'},
+    {label:'Séquences actives',value:state.automations.filter(a=>a.is_enabled).length,icon:'⚡'},
+  ].map(k=>`<div class="kpi-card"><div class="kpi-icon">${k.icon}</div><div class="kpi-label">${k.label}</div><div class="kpi-value" style="font-size:36px;">${k.value}</div></div>`).join('');
+  const months=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+  const inV=[12,18,15,22,28,19,31,24,28,35,22,total],cvV=[4,7,5,9,12,8,14,10,11,15,9,convertis];
+  const maxV=Math.max(...inV,1);
+  let ch='',lb='';
+  inV.forEach((v,i)=>{ch+=`<div class="chart-bar-group"><div class="c-bar" style="height:${Math.round(v/maxV*130)}px;background:rgba(255,76,0,0.7);"></div><div class="c-bar" style="height:${Math.round(cvV[i]/maxV*130)}px;background:rgba(34,197,94,0.7);"></div></div>`;lb+=`<div class="chart-label">${months[i]}</div>`;});
+  document.getElementById('analytics-chart-conv').innerHTML=ch;
+  document.getElementById('analytics-chart-labels').innerHTML=lb;
+  const sources={}; ps.forEach(p=>{sources[p.source]=(sources[p.source]||0)+1;});
+  const srcColors={'Facebook Ads':'#3b5998','Google Ads':'#ea4335','Site web':'#ff4c00','Instagram':'#e1306c','Parrainage':'#22c55e','Téléphone':'#c8943a','Passage direct':'#6b6b7a','Autre':'#3b82f6'};
+  document.getElementById('analytics-sources').innerHTML=Object.entries(sources).sort((a,b)=>b[1]-a[1]).map(([s,c])=>{
+    const pct=Math.round(c/total*100);
+    return `<div style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:12px;color:var(--muted);">${s}</span><span style="font-size:12px;font-weight:700;color:var(--light);">${c} (${pct}%)</span></div><div style="height:8px;background:var(--steel);overflow:hidden;"><div style="height:100%;width:${pct}%;background:${srcColors[s]||'#ff4c00'}"></div></div></div>`;
+  }).join('')||'<div style="color:var(--ash);">Aucune donnée</div>';
+  document.getElementById('perf-table-body').innerHTML=state.team.map(m=>{
+    const assigned=ps.filter(p=>p.assignee_id===m.id);
+    const conv=assigned.filter(p=>p.status==='converti');
+    const rdvDone=assigned.filter(p=>['visite','offre','converti'].includes(p.status));
+    const contacted=assigned.filter(p=>['contacte','visite','offre','converti'].includes(p.status));
+    const r=assigned.length>0?Math.round(conv.length/assigned.length*100):0;
+    return `<tr><td><strong style="color:var(--white)">${m.firstname} ${m.lastname}</strong><br><span style="font-size:11px;color:var(--ash);">${m.role}</span></td><td>${assigned.length}</td><td>${contacted.length}</td><td>${rdvDone.length}</td><td><strong style="color:var(--green)">${conv.length}</strong></td><td><strong style="color:${r>=30?'var(--green)':r>=15?'var(--gold)':'var(--ember)'}">${r}%</strong></td><td><div class="progress-cell"><div class="progress-bar"><div class="progress-fill" style="width:${r}%"></div></div><span style="font-size:11px;color:var(--ash);width:30px;">${r}%</span></div></td></tr>`;
+  }).join('')||'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--ash);">Aucun commercial</td></tr>';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// IMPORT / EXPORT
+// ═══════════════════════════════════════════════════════════════
+function switchImportTab(tab) {
+  ['import','export','mapping'].forEach(t=>{const el=document.getElementById('import-tab-'+t);if(el)el.style.display=t===tab?'':'none';});
+  document.querySelectorAll('#page-import .pill-tab').forEach((btn,i)=>btn.classList.toggle('active',['import','export','mapping'][i]===tab));
+  if(tab==='mapping') renderIntegrations();
+}
+function handleDragOver(e){e.preventDefault();e.currentTarget.classList.add('drag-over');}
+function handleDragLeave(e){e.currentTarget.classList.remove('drag-over');}
+function handleDrop(e){e.preventDefault();e.currentTarget.classList.remove('drag-over');processCSV(e.dataTransfer.files[0]);}
+function handleDropQuick(e){e.preventDefault();processCSV(e.dataTransfer.files[0],true);}
+function handleCSVFile(e){processCSV(e.target.files[0]);}
+function handleCSVFileQuick(e){processCSV(e.target.files[0],true);}
+function processCSV(file,quick) {
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const lines=e.target.result.split('\n').filter(l=>l.trim());
+    if(lines.length<2){toast('Fichier vide','error');return;}
+    const headers=lines[0].split(',').map(h=>h.trim().toLowerCase().replace(/"/g,''));
+    const data=[];
+    for(let i=1;i<lines.length;i++){
+      const cols=lines[i].split(',').map(c=>c.trim().replace(/^"|"$/g,''));
+      const row={};
+      headers.forEach((h,j)=>row[h]=cols[j]||'');
+      if(row.nom||row.name||row.prenom||row.firstname) data.push(row);
+    }
+    state.importData=data;
+    if(quick){confirmImport();closeModal('modal-import-quick');return;}
+    document.getElementById('import-count').textContent=data.length;
+    const preview=document.getElementById('import-preview');
+    preview.style.display='';
+    const displayH=['prenom','nom','email','telephone','source','statut'].filter(h=>headers.includes(h));
+    const table=document.getElementById('import-preview-table');
+    table.querySelector('thead').innerHTML='<tr>'+displayH.map(h=>'<th>'+h+'</th>').join('')+'</tr>';
+    table.querySelector('tbody').innerHTML=data.slice(0,5).map(row=>'<tr>'+displayH.map(h=>'<td style="padding:8px 14px;font-size:12px;border-bottom:1px solid var(--border);color:var(--muted)">'+( row[h]||'—')+'</td>').join('')+'</tr>').join('');
+  };
+  reader.readAsText(file,'UTF-8');
+}
+async function confirmImport() {
+  if(!state.importData.length) return;
+  let added=0;
+  for(const row of state.importData){
+    const fn=row.prenom||row.firstname||(row.nom||'').split(' ')[0]||'Inconnu';
+    const ln=row.nom||row.lastname||'';
+    try{await dbInsertProspect({club_id:state.currentClub?.id||'demo-club',firstname:fn,lastname:ln,email:row.email||'',phone:row.telephone||row.phone||'',source:row.source||'Import CSV',status:row.statut||row.status||'nouveau',goal:row.objectif||row.goal||'Remise en forme',budget:row.budget||'30-50€',score:parseInt(row.score)||50,notes:row.notes||''});added++;}catch(e){}
+  }
+  state.importData=[];
+  document.getElementById('import-preview').style.display='none';
+  await dbAddActivity(added+' prospects importés via CSV','#22c55e');
+  updateBadges(); toast(added+' prospects importés ✓','success');
+}
+function cancelImport(){state.importData=[];document.getElementById('import-preview').style.display='none';}
+function exportCSV(){
+  const headers=['ID','Prénom','Nom','Email','Téléphone','Source','Statut','Objectif','Budget','Score','Notes','Créé le'];
+  const rows=state.prospects.map(p=>[p.id,p.firstname,p.lastname,p.email||'',p.phone||'',p.source,p.status,p.goal||'',p.budget||'',p.score||50,(p.notes||'').replace(/,/g,';'),formatDate(p.created_at)]);
+  downloadCSV([headers,...rows],'ironcrm_prospects_'+new Date().toISOString().split('T')[0]+'.csv');
+  toast('Export CSV ✓','success');
+}
+function exportRDVCSV(){
+  const headers=['ID','Titre','Type','Date','Durée','Prospect','Notes'];
+  const rows=state.rdvs.map(r=>{const p=state.prospects.find(x=>x.id===(r.prospect_id||r.prospectId));return[r.id,r.title,r.type,r.scheduled_at||r.date,r.duration_minutes||30,p?p.firstname+' '+p.lastname:'',r.notes||''];});
+  downloadCSV([headers,...rows],'ironcrm_rdvs_'+new Date().toISOString().split('T')[0]+'.csv');
+  toast('Export RDV ✓','success');
+}
+function downloadCSV(rows,filename){
+  const content=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+content],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();
+}
+function renderIntegrations(){
+  const list=[
+    {name:'Facebook Ads',icon:'📘',desc:'Leads automatiques',status:'Actif',active:true},
+    {name:'Google Ads',icon:'🔴',desc:'Formulaires leadgen',status:'Actif',active:true},
+    {name:'Resamania',icon:'🔗',desc:'ERP gestion club',status:'Disponible'},
+    {name:'Glofox',icon:'🔗',desc:'Logiciel studio',status:'Disponible'},
+    {name:'Twilio SMS',icon:'💬',desc:'SMS automatique',status:'Config requise'},
+    {name:'Mailchimp',icon:'📧',desc:'Email marketing',status:'Disponible'},
+    {name:'Stripe',icon:'💳',desc:'Paiements',status:'Disponible'},
+    {name:'Zapier',icon:'⚡',desc:'Automatisations',status:'Disponible'},
+  ];
+  document.getElementById('integrations-grid').innerHTML=list.map(i=>`<div class="card" style="cursor:pointer;" onmouseover="this.style.borderColor='var(--border-ember)'" onmouseout="this.style.borderColor='var(--border)'"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><span style="font-size:24px;">${i.icon}</span><div><div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--white);">${i.name}</div><div style="font-size:12px;color:var(--ash);">${i.desc}</div></div><div style="margin-left:auto;"><span class="tag ${i.active?'tag-green':'tag-gray'}">${i.status}</span></div></div><button class="btn btn-ghost btn-sm" style="width:100%">${i.active?'Configurer':'Connecter'}</button></div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════════════════════
+function renderSettings(){
+  if(state.currentUser){
+    document.getElementById('s-firstname').value=state.currentUser.firstname||'';
+    document.getElementById('s-lastname').value=state.currentUser.lastname||'';
+    document.getElementById('s-email').value=state.currentUser.email||'';
+  }
+  if(state.currentClub){
+    document.getElementById('s-club-name').value=state.currentClub.name||'';
+    document.getElementById('s-club-phone').value=state.currentClub.phone||'';
+    document.getElementById('s-club-website').value=state.currentClub.website||'';
+    document.getElementById('s-club-address').value=state.currentClub.address||'';
+    renderPlanInfo();
+  }
+  populateTeamList(); renderPipelineStages();
+}
+function switchSettings(panel){
+  document.querySelectorAll('.settings-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.settings-nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('settings-'+panel).classList.add('active');
+  const panels=['general','club','email','sms','team','pipeline','plan','data'];
+  const items=document.querySelectorAll('.settings-nav-item');
+  const idx=panels.indexOf(panel);
+  if(items[idx]) items[idx].classList.add('active');
+}
+async function saveUserProfile(){
+  if(DEMO_MODE){toast('Mode démo','info');return;}
+  const fn=document.getElementById('s-firstname').value.trim();
+  const ln=document.getElementById('s-lastname').value.trim();
+  const{error}=await sb.from('users').update({firstname:fn,lastname:ln}).eq('id',state.currentUser.id);
+  if(error){toast(error.message,'error');return;}
+  state.currentUser.firstname=fn;state.currentUser.lastname=ln;
+  document.getElementById('user-name-display').textContent=(fn+' '+ln).trim();
+  document.getElementById('user-avatar').textContent=fn[0]?.toUpperCase()||'?';
+  toast('Profil mis à jour ✓','success');
+}
+async function saveClubSettings(){
+  if(DEMO_MODE){toast('Mode démo','info');return;}
+  const updates={name:document.getElementById('s-club-name').value.trim(),phone:document.getElementById('s-club-phone').value.trim(),website:document.getElementById('s-club-website').value.trim(),address:document.getElementById('s-club-address').value.trim(),club_type:document.getElementById('s-club-type').value};
+  const{error}=await sb.from('clubs').update(updates).eq('id',state.currentClub.id);
+  if(error){toast(error.message,'error');return;}
+  Object.assign(state.currentClub,updates);
+  document.getElementById('club-badge-name').textContent=updates.name;
+  toast('Club mis à jour ✓','success');
+}
+async function changePassword(){
+  if(DEMO_MODE){toast('Mode démo','info');return;}
+  const np=document.getElementById('s-new-password').value;
+  const cp=document.getElementById('s-confirm-password').value;
+  if(!np||np.length<8){toast('Mot de passe trop court','error');return;}
+  if(np!==cp){toast('Les mots de passe ne correspondent pas','error');return;}
+  const{error}=await sb.auth.updateUser({password:np});
+  if(error){toast(error.message,'error');return;}
+  document.getElementById('s-new-password').value='';
+  document.getElementById('s-confirm-password').value='';
+  toast('Mot de passe mis à jour ✓','success');
+}
+function populateTeamList(){
+  document.getElementById('team-list').innerHTML=state.team.map(m=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);">
+      <div class="avatar" style="width:36px;height:36px;font-size:15px;">${m.firstname?.[0]||'?'}</div>
+      <div style="flex:1;"><div style="font-weight:600;color:var(--light);font-size:13px;">${m.firstname} ${m.lastname}</div><div style="font-size:12px;color:var(--ash);">${m.email} · <span style="color:var(--ember);text-transform:capitalize;">${m.role}</span></div></div>
+      ${m.id!==state.currentUser?.id?'<button class="btn btn-danger btn-sm btn-icon" onclick="removeMember(\''+m.id+'\')">🗑️</button>':'<span style="font-size:11px;color:var(--ash);">Vous</span>'}
+    </div>`).join('')||'<div style="color:var(--ash);font-size:13px;padding:12px 0;">Aucun membre</div>';
+}
+async function inviteMember(){
+  const name=document.getElementById('member-name').value.trim();
+  const email=document.getElementById('member-email').value.trim();
+  const role=document.getElementById('member-role').value;
+  if(!name||!email){toast('Nom et email requis','error');return;}
+  const parts=name.split(' ');
+  const firstname=parts[0],lastname=parts.slice(1).join(' ')||'';
+  if(DEMO_MODE){state.team.push({id:'t'+Date.now(),club_id:'demo-club',email,firstname,lastname,role});closeModal('modal-add-member');populateTeamList();toast('Membre ajouté (démo)','success');return;}
+  if(state.team.length>=(state.currentClub.max_users||1)){toast('Limite utilisateurs atteinte — upgradez votre plan','error');return;}
+  const{error}=await sb.from('users').insert([{club_id:state.currentClub.id,email,firstname,lastname,role,is_active:true}]);
+  if(error){toast(error.message,'error');return;}
+  await loadTeam();closeModal('modal-add-member');populateTeamList();
+  toast('Membre ajouté — invitation envoyée ✓','success');
+}
+async function removeMember(id){
+  if(!confirm('Retirer ce membre ?')) return;
+  if(DEMO_MODE){state.team=state.team.filter(m=>m.id!==id);populateTeamList();toast('Membre retiré');return;}
+  await sb.from('users').update({is_active:false}).eq('id',id).eq('club_id',state.currentClub.id);
+  await loadTeam();populateTeamList();toast('Membre retiré ✓');
+}
+function renderPipelineStages(){
+  document.getElementById('pipeline-stages-list').innerHTML=state.stages.map((s,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--steel);border:1px solid var(--border);margin-bottom:6px;">
+      <div style="width:14px;height:14px;border-radius:50%;background:${s.color};flex-shrink:0;"></div>
+      <span style="flex:1;font-size:13px;color:var(--light);font-weight:600;">${s.name}</span>
+      <span style="font-size:11px;color:var(--ash);">${state.prospects.filter(p=>p.status===s.slug||p.status===s.id).length} prospects</span>
+      ${i>0?'<button class="btn btn-danger btn-sm btn-icon" onclick="deleteStage(\''+s.id+'\')">🗑️</button>':'<span style="width:36px;"></span>'}
+    </div>`).join('');
+}
+async function addPipelineStage(){
+  const name=prompt('Nom de la nouvelle étape :');
+  if(!name) return;
+  const colors=['#8b5cf6','#06b6d4','#f59e0b','#10b981'];
+  const color=colors[Math.floor(Math.random()*colors.length)];
+  const slug=name.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+  if(DEMO_MODE){state.stages.push({id:'s'+Date.now(),club_id:'demo-club',name,slug,color,position:state.stages.length});renderPipelineStages();toast('Étape ajoutée ✓','success');return;}
+  const{error}=await sb.from('pipeline_stages').insert([{club_id:state.currentClub.id,name,slug,color,position:state.stages.length}]);
+  if(error){toast(error.message,'error');return;}
+  await loadStages();renderPipelineStages();toast('Étape ajoutée ✓','success');
+}
+async function deleteStage(id){
+  const stage=state.stages.find(s=>s.id===id);if(!stage) return;
+  if(state.prospects.some(p=>p.status===stage.slug||p.status===stage.id)){toast('Impossible : des prospects utilisent cette étape','error');return;}
+  if(!confirm('Supprimer cette étape ?')) return;
+  if(DEMO_MODE){state.stages=state.stages.filter(s=>s.id!==id);renderPipelineStages();return;}
+  await sb.from('pipeline_stages').delete().eq('id',id).eq('club_id',state.currentClub.id);
+  await loadStages();renderPipelineStages();
+}
+function renderPlanInfo(){
+  const c=state.currentClub;
+  const planLabels={starter:'Starter',pro:'Pro',reseau:'Réseau'};
+  const planPrices={starter:'79€/mois',pro:'149€/mois',reseau:'299€/mois'};
+  const planColors={starter:'var(--ash)',pro:'var(--ember)',reseau:'var(--gold)'};
+  document.getElementById('plan-info-block').innerHTML=`
+    <div style="display:flex;align-items:center;gap:16px;padding:16px;background:var(--steel);border:1px solid var(--border);margin-bottom:16px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:${planColors[c?.plan||'starter']};">${planLabels[c?.plan||'starter']}</div>
+      <div><div style="font-size:18px;font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--white);">${planPrices[c?.plan||'starter']}</div>
+      <div style="font-size:12px;color:var(--ash);">${c?.max_users||1} utilisateur(s) · ${c?.max_prospects>=9999?'Illimité':(c?.max_prospects||500)+' max'} prospects</div></div>
+    </div>
+    <div style="font-size:13px;color:var(--ash);margin-bottom:16px;">Pour changer de plan ou gérer la facturation, contactez notre équipe.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-primary btn-sm" onclick="toast('Contactez contact@ironcrm.fr','info')">⬆ Upgrader</button>
+      <button class="btn btn-ghost btn-sm" onclick="toast('Contactez contact@ironcrm.fr','info')">💳 Facturation</button>
+    </div>`;
+}
+async function confirmClearData(){
+  if(!confirm('Supprimer TOUS les prospects ? Irréversible.')) return;
+  if(DEMO_MODE){state.prospects=[];renderProspects();updateBadges();toast('Prospects supprimés');return;}
+  await sb.from('prospects').delete().eq('club_id',state.currentClub.id);
+  state.prospects=[];renderProspects();updateBadges();toast('Tous les prospects supprimés');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SUPER ADMIN PANEL
+// ═══════════════════════════════════════════════════════════════
+async function loadAdminData(){
+  if(DEMO_MODE){
+    document.getElementById('admin-kpis').innerHTML=[
+      {label:'Clubs actifs',value:1,icon:'🏋️'},{label:'Utilisateurs',value:3,icon:'👥'},
+      {label:'Prospects total',value:8,icon:'📊'},{label:'MRR (démo)',value:'149€',icon:'💶'}
+    ].map(k=>`<div class="kpi-card"><div class="kpi-icon">${k.icon}</div><div class="kpi-label">${k.label}</div><div class="kpi-value" style="font-size:36px;">${k.value}</div></div>`).join('');
+    document.getElementById('admin-clubs-tbody').innerHTML=`<tr><td><strong style="color:var(--white)">Iron Gym Paris</strong><br><span style="font-size:11px;color:var(--ash)">iron-gym-paris</span></td><td><span class="tag tag-ember">PRO</span></td><td>3</td><td>8</td><td>2</td><td><span class="tag tag-green">Actif</span></td><td><span style="font-size:12px;color:var(--ash)">Aujourd'hui</span></td><td><button class="btn btn-ghost btn-sm" onclick="loadDemoMode();document.getElementById('admin-panel').classList.remove('visible');document.getElementById('app-shell').classList.remove('hidden');navigate('dashboard');">Voir</button></td></tr>`;
+    return;
+  }
+  const{data:clubs}=await sb.from('admin_clubs_overview').select('*');
+  const mrr_map={starter:79,pro:149,reseau:299};
+  const mrr=clubs?.reduce((a,c)=>a+(mrr_map[c.plan]||0),0)||0;
+  document.getElementById('admin-kpis').innerHTML=[
+    {label:'Clubs actifs',value:clubs?.length||0,icon:'🏋️'},
+    {label:'Utilisateurs',value:clubs?.reduce((a,c)=>a+c.user_count,0)||0,icon:'👥'},
+    {label:'Prospects total',value:clubs?.reduce((a,c)=>a+c.prospect_count,0)||0,icon:'📊'},
+    {label:'MRR estimé',value:mrr+'€',icon:'💶'},
+  ].map(k=>`<div class="kpi-card"><div class="kpi-icon">${k.icon}</div><div class="kpi-label">${k.label}</div><div class="kpi-value" style="font-size:36px;">${k.value}</div></div>`).join('');
+  document.getElementById('admin-clubs-tbody').innerHTML=(clubs||[]).map(c=>`<tr>
+    <td><strong style="color:var(--white)">${c.name}</strong><br><span style="font-size:11px;color:var(--ash)">${c.slug}</span></td>
+    <td><span class="tag ${c.plan==='pro'?'tag-ember':c.plan==='reseau'?'tag-gold':'tag-gray'}">${c.plan.toUpperCase()}</span></td>
+    <td>${c.user_count}</td><td>${c.prospect_count}</td><td>${c.converted_count}</td>
+    <td><span class="tag ${c.is_active?'tag-green':'tag-red'}">${c.is_active?'Actif':'Inactif'}</span></td>
+    <td><span style="font-size:12px;color:var(--ash)">${formatDate(c.created_at)}</span></td>
+    <td><button class="btn btn-ghost btn-sm" onclick="adminImpersonate('${c.id}')">Voir</button></td>
+  </tr>`).join('');
+}
+async function adminImpersonate(clubId){
+  const{data:club}=await sb.from('clubs').select('*').eq('id',clubId).single();
+  if(!club) return;
+  state.currentClub=club;
+  const{data:users}=await sb.from('users').select('*').eq('club_id',clubId);
+  state.team=users||[];
+  await Promise.all([loadStages(),loadProspects(),loadRDVs(),loadAutomations(),loadActivity()]);
+  document.getElementById('admin-panel').classList.remove('visible');
+  document.getElementById('app-shell').classList.remove('hidden');
+  document.getElementById('club-badge-name').textContent='⚡ '+club.name;
+  navigate('dashboard');
+  toast('Visualisation : '+club.name,'info');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MOBILE HELPERS
+// ═══════════════════════════════════════════════════════════════
+function openMobileSidebar(){document.getElementById('sidebar').classList.add('mobile-open');document.getElementById('sidebar-overlay').classList.add('show');document.body.style.overflow='hidden';}
+function closeMobileSidebar(){document.getElementById('sidebar').classList.remove('mobile-open');document.getElementById('sidebar-overlay').classList.remove('show');document.body.style.overflow='';}
+function isMobile(){return window.innerWidth<=768;}
+function syncBottomNav(page){document.querySelectorAll('.bottom-nav-item[data-page]').forEach(el=>el.classList.toggle('active',el.dataset.page===page));}
+function updateMobileSearchBar(page){const bar=document.getElementById('mobile-search-bar');if(bar)bar.style.display=(isMobile()&&page==='prospects')?'flex':'none';}
+
+// ═══════════════════════════════════════════════════════════════
+// MODALS & HELPERS
+// ═══════════════════════════════════════════════════════════════
+function openModal(id){
+  if(id==='modal-add-prospect'){populateStagesSelect('p-status',state.filterStatus!=='all'?state.filterStatus:'nouveau');populateTeamSelect('p-assignee',state.currentUser?.id||'');}
+  if(id==='modal-add-rdv'){populateProspectSelects();document.getElementById('rdv-date').value=state.selectedDate;}
+  if(id==='modal-add-automation'){state.autoStepCount=0;document.getElementById('auto-steps-list').innerHTML='';['auto-name','auto-desc'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});addAutoStep();}
+  document.getElementById(id)?.classList.add('open');
+}
+function closeModal(id){document.getElementById(id)?.classList.remove('open');}
+document.querySelectorAll('.modal-backdrop').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id);});});
+function populateStagesSelect(selectId,selectedSlug){
+  const sel=document.getElementById(selectId);if(!sel)return;
+  sel.innerHTML=state.stages.map(s=>'<option value="'+s.slug+'" '+(s.slug===selectedSlug||s.id===selectedSlug?'selected':'')+'>'+s.name+'</option>').join('');
+}
+function populateTeamSelect(selectId,selectedId){
+  const sel=document.getElementById(selectId);if(!sel)return;
+  sel.innerHTML='<option value="">— Non assigné —</option>'+state.team.map(m=>'<option value="'+m.id+'" '+(m.id===selectedId?'selected':'')+'>'+m.firstname+' '+m.lastname+'</option>').join('');
+}
+function populateProspectSelects(){
+  const sel=document.getElementById('rdv-prospect');if(!sel)return;
+  sel.innerHTML='<option value="">— Aucun prospect —</option>'+state.prospects.map(p=>'<option value="'+p.id+'">'+p.firstname+' '+p.lastname+'</option>').join('');
+}
+function formatDate(dt){
+  if(!dt) return '—';
+  const d=new Date(dt);
+  return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
+}
+function formatRelTime(dt){
+  if(!dt) return '';
+  const diff=Date.now()-new Date(dt).getTime();
+  if(diff<60000) return 'A l\'instant';
+  if(diff<3600000) return 'Il y a '+Math.round(diff/60000)+'min';
+  if(diff<86400000) return 'Il y a '+Math.round(diff/3600000)+'h';
+  if(diff<172800000) return 'Hier';
+  return formatDate(dt);
+}
+function toast(msg,type=''){
+  const wrap=document.getElementById('toast-wrap');
+  const t=document.createElement('div');
+  t.className='toast '+type;t.textContent=msg;
+  wrap.appendChild(t);setTimeout(()=>t.remove(),3500);
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){document.querySelectorAll('.modal-backdrop.open').forEach(m=>m.classList.remove('open'));closeMobileSidebar();}
+  if(e.ctrlKey&&e.key==='n'){e.preventDefault();openModal('modal-add-prospect');}
+  if(e.ctrlKey&&e.key==='k'){e.preventDefault();const gs=document.getElementById('global-search');if(gs)gs.focus();}
+});
+document.querySelectorAll('#page-import .pill-tab').forEach((btn,i)=>{
+  btn.addEventListener('click',()=>{
+    ['import','export','mapping'].forEach((t,j)=>{const el=document.getElementById('import-tab-'+t);if(el)el.style.display=j===i?'':'none';});
+    document.querySelectorAll('#page-import .pill-tab').forEach((b,j)=>b.classList.toggle('active',j===i));
+    if(i===2)renderIntegrations();
+  });
+});
+
+</script>
+</body>
+</html>
