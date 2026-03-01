@@ -1218,13 +1218,21 @@ const demoData = {
 // ═══════════════════════════════════════════════════════════════
 (async function init() {
   if (DEMO_MODE) { loadDemoMode(); return; }
+
+  // 1) Écouter les changements futurs (reconnexion, refresh token, logout)
   sb.auth.onAuthStateChange(async (event, session) => {
+    // Ignorer INITIAL_SESSION — on le gère manuellement en dessous
+    if (event === 'INITIAL_SESSION') return;
     state.session = session;
     if (session) await loadUserContext(session);
     else showAuthScreen();
   });
+
+  // 2) Charger la session existante immédiatement
   const { data:{ session } } = await sb.auth.getSession();
-  if (!session) showAuthScreen();
+  state.session = session;
+  if (session) await loadUserContext(session);
+  else showAuthScreen();
 })();
 
 function loadDemoMode() {
