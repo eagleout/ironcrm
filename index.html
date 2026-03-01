@@ -1216,23 +1216,19 @@ const demoData = {
 // ═══════════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════════
-let _loadingContext = false; // ← verrou anti-double appel
+let _loadingContext = false;
 
 (async function init() {
   if (DEMO_MODE) { loadDemoMode(); return; }
 
-  // Écouter les changements (login, logout, token refresh)
   sb.auth.onAuthStateChange(async (event, session) => {
     console.log('onAuthStateChange:', event);
-    // Ignorer INITIAL_SESSION (géré manuellement ci-dessous)
     if (event === 'INITIAL_SESSION') return;
-    
     state.session = session;
     if (event === 'SIGNED_OUT') { showAuthScreen(); return; }
     if (session && !_loadingContext) await loadUserContext(session);
   });
 
-  // Charger la session existante immédiatement
   const { data:{ session } } = await sb.auth.getSession();
   state.session = session;
   if (session) {
@@ -1255,34 +1251,29 @@ function loadDemoMode() {
   showApp();
 }
 
-// ═══════════════════════════════════════════════════════════════
-// IRONCRM — CORRECTIF CONNEXION
-// ═══════════════════════════════════════════════════════════════
-//
-// Dans ton fichier HTML, recherche (Ctrl+F) la fonction :
-//
-//   async function loadUserContext(session)
-//
-// Et remplace TOUTE la fonction (du "async function" jusqu'à son "}")
-// par le code ci-dessous :
-// ═══════════════════════════════════════════════════════════════
-
 async function loadUserContext(session) {
   if (_loadingContext) { console.log('loadUserContext déjà en cours, skip'); return; }
   _loadingContext = true;
   try {
     console.log('loadUserContext: auth_id =', session.user.id);
-    // ... tout le reste identique ...
-    await Promise.all([loadStages(), loadTeam(), loadProspects(), loadRDVs(), loadAutomations(), loadActivity()]);
-    showApp();
-  } catch(err) {
-    console.error('loadUserContext CRASH:', err);
-    showAuthScreen();
-    showAuthError('Erreur de chargement: ' + err.message);
-  } finally {
-    _loadingContext = false;  // ← libérer le verrou dans TOUS les cas
-  }
-}
+
+    const { data:adminData, error:adminError } = await sb.from('super_admins').select('*').eq('auth_id', session.user.id).maybeSingle();
+    console.log('super_admins check:', { adminData, adminError });
+    if (adminData) {
+      state.isSuperAdmin = true;
+      state.currentUser = { firstname:'Super', lastname:'Admin', email:session.user.email, role:'superadmin' };
+      showAdminPanel(); await loadAdminData(); return;
+    }
+
+    const { data:userData, error:userError } = await sb.from('users').select('*, clubs(*)').eq('auth_id', session.user.id).maybeSingle();
+    console.log('users check:', { userData, userError });
+
+    if (userError || !userData) {
+      console.error('Profil introuvable:', userError);
+      showAuthScreen();
+      showAuthError('Profil introuvable — contactez le support. (auth_id: ' + session.user.id + ')');
+      return;
+    }
 
     state.currentUser = userData;
     state.currentClub = userData.clubs;
@@ -1300,9 +1291,11 @@ async function loadUserContext(session) {
     console.error('loadUserContext CRASH:', err);
     showAuthScreen();
     showAuthError('Erreur de chargement: ' + err.message);
+  } finally {
+    _loadingContext = false;
   }
 }
-
+   
 // ═══════════════════════════════════════════════════════════════
 // AUTH UI
 // ═══════════════════════════════════════════════════════════════
