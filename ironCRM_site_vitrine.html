@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ironCRM — Le CRM des salles de sport</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,300;0,400;0,600;0,700;1,300&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --iron: #0d0d0f;
+    --forge: #141418;
+    --steel: #1e1e26;
+    --ember: #ff4c00;
+    --ember-glow: #ff6a2f;
+    --gold: #c8943a;
+    --ash: #6b6b78;
+    --light: #e8e8ec;
+    --white: #f5f5f7;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--iron);
+    color: var(--light);
+    font-family: 'Barlow', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+  }
+
+  /* NOISE TEXTURE */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.6;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 100;
+    padding: 20px 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(to bottom, rgba(13,13,15,0.98), transparent);
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 3px;
+    color: var(--white);
+  }
+
+  .logo span {
+    color: var(--ember);
+  }
+
+  nav ul {
+    list-style: none;
+    display: flex;
+    gap: 40px;
+  }
+
+  nav ul a {
+    color: var(--ash);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  nav ul a:hover { color: var(--white); }
+
+  .nav-cta {
+    background: var(--ember);
+    color: white !important;
+    padding: 10px 24px;
+    font-size: 12px !important;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 700 !important;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.2s;
+  }
+
+  .nav-cta:hover {
+    background: var(--ember-glow) !important;
+    transform: translateY(-1px);
+    color: white !important;
+  }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    padding: 0 60px;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse 60% 50% at 70% 50%, rgba(255,76,0,0.08) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 20% 80%, rgba(200,148,58,0.05) 0%, transparent 60%);
+  }
+
+  .hero-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: linear-gradient(to bottom, transparent, var(--ember), transparent);
+    opacity: 0.4;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 700px;
+    animation: fadeUp 0.8s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,76,0,0.1);
+    border: 1px solid rgba(255,76,0,0.3);
+    padding: 6px 16px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ember);
+    font-weight: 600;
+    margin-bottom: 32px;
+  }
+
+  .hero-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--ember);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(70px, 9vw, 120px);
+    line-height: 0.9;
+    letter-spacing: 2px;
+    color: var(--white);
+    margin-bottom: 28px;
+  }
+
+  h1 em {
+    font-style: normal;
+    color: var(--ember);
+    display: block;
+  }
+
+  .hero-sub {
+    font-size: 18px;
+    line-height: 1.7;
+    color: var(--ash);
+    max-width: 520px;
+    margin-bottom: 48px;
+    font-weight: 300;
+  }
+
+  .hero-sub strong {
+    color: var(--light);
+    font-weight: 600;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    background: var(--ember);
+    color: white;
+    padding: 16px 36px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+
+  .btn-primary:hover {
+    background: var(--ember-glow);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(255,76,0,0.35);
+  }
+
+  .btn-primary:hover::after { opacity: 1; }
+
+  .btn-ghost {
+    color: var(--ash);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s;
+    padding-bottom: 2px;
+  }
+
+  .btn-ghost:hover {
+    color: var(--white);
+    border-color: var(--white);
+  }
+
+  .hero-stats {
+    position: absolute;
+    right: 60px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    animation: fadeUp 0.8s 0.3s ease both;
+  }
+
+  .stat-card {
+    background: rgba(30,30,38,0.8);
+    border: 1px solid rgba(255,76,0,0.15);
+    border-left: 3px solid var(--ember);
+    padding: 20px 28px;
+    backdrop-filter: blur(10px);
+    min-width: 180px;
+  }
+
+  .stat-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 44px;
+    color: var(--ember);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--ash);
+    font-weight: 600;
+  }
+
+  /* LOGOS */
+  .logos-strip {
+    background: var(--forge);
+    padding: 28px 60px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    overflow: hidden;
+  }
+
+  .logos-label {
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ash);
+    font-weight: 600;
+    margin-bottom: 20px;
+  }
+
+  .logos-track {
+    display: flex;
+    gap: 60px;
+    animation: scroll 20s linear infinite;
+    white-space: nowrap;
+  }
+
+  .logos-track span {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.12);
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  @keyframes scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* SECTION STYLES */
+  section {
+    padding: 100px 60px;
+    position: relative;
+  }
+
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--ember);
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-label::before {
+    content: '';
+    width: 30px;
+    height: 2px;
+    background: var(--ember);
+  }
+
+  h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(44px, 5vw, 72px);
+    line-height: 1;
+    letter-spacing: 2px;
+    color: var(--white);
+    margin-bottom: 20px;
+  }
+
+  h2 span { color: var(--ember); }
+
+  .section-intro {
+    font-size: 17px;
+    color: var(--ash);
+    max-width: 550px;
+    line-height: 1.7;
+  }
+
+  /* FEATURES */
+  .features {
+    background: var(--forge);
+  }
+
+  .features-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 70px;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    background: rgba(255,255,255,0.04);
+  }
+
+  .feature-card {
+    background: var(--forge);
+    padding: 48px 40px;
+    transition: background 0.3s;
+    cursor: default;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--ember);
+    transition: width 0.4s ease;
+  }
+
+  .feature-card:hover::before { width: 100%; }
+  .feature-card:hover { background: var(--steel); }
+
+  .feature-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(255,76,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    font-size: 22px;
+    border: 1px solid rgba(255,76,0,0.2);
+  }
+
+  .feature-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--white);
+    margin-bottom: 12px;
+  }
+
+  .feature-desc {
+    font-size: 14px;
+    color: var(--ash);
+    line-height: 1.7;
+  }
+
+  /* PIPELINE */
+  .pipeline-section {
+    background: var(--iron);
+  }
+
+  .pipeline-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+    margin-top: 60px;
+  }
+
+  .pipeline-visual {
+    background: var(--steel);
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 32px;
+    position: relative;
+  }
+
+  .pipeline-visual::before {
+    content: 'PIPELINE PROSPECTS';
+    position: absolute;
+    top: -1px;
+    left: 32px;
+    background: var(--ember);
+    color: white;
+    font-size: 10px;
+    letter-spacing: 2px;
+    font-weight: 700;
+    padding: 4px 12px;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  .kanban {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    overflow-x: auto;
+  }
+
+  .kanban-col {
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .kanban-header {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    background: rgba(255,255,255,0.04);
+    border-left: 3px solid;
+  }
+
+  .kanban-col:nth-child(1) .kanban-header { border-color: var(--ash); color: var(--ash); }
+  .kanban-col:nth-child(2) .kanban-header { border-color: var(--gold); color: var(--gold); }
+  .kanban-col:nth-child(3) .kanban-header { border-color: var(--ember); color: var(--ember); }
+  .kanban-col:nth-child(4) .kanban-header { border-color: #3fb950; color: #3fb950; }
+
+  .kanban-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .kanban-card:hover {
+    background: rgba(255,76,0,0.08);
+    border-color: rgba(255,76,0,0.3);
+    transform: translateY(-1px);
+  }
+
+  .kanban-name {
+    font-weight: 600;
+    color: var(--light);
+    margin-bottom: 4px;
+  }
+
+  .kanban-meta {
+    color: var(--ash);
+    font-size: 11px;
+  }
+
+  .kanban-score {
+    display: inline-block;
+    background: rgba(255,76,0,0.15);
+    color: var(--ember);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    margin-top: 6px;
+    letter-spacing: 1px;
+  }
+
+  .pipeline-points {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .pipeline-point {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+
+  .point-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    color: rgba(255,76,0,0.2);
+    line-height: 1;
+    flex-shrink: 0;
+    width: 50px;
+    transition: color 0.3s;
+  }
+
+  .pipeline-point:hover .point-num { color: var(--ember); }
+
+  .point-content h3 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--white);
+    margin-bottom: 8px;
+  }
+
+  .point-content p {
+    font-size: 14px;
+    color: var(--ash);
+    line-height: 1.7;
+  }
+
+  /* AUTOMATIONS */
+  .auto-section {
+    background: var(--forge);
+  }
+
+  .auto-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 60px;
+    align-items: center;
+    margin-top: 60px;
+  }
+
+  .auto-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .auto-step {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    position: relative;
+    padding-bottom: 32px;
+  }
+
+  .auto-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 19px;
+    top: 40px;
+    width: 2px;
+    height: calc(100% - 20px);
+    background: linear-gradient(to bottom, var(--ember), rgba(255,76,0,0));
+  }
+
+  .step-dot {
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--ember);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    color: var(--ember);
+    flex-shrink: 0;
+    background: var(--forge);
+    z-index: 1;
+  }
+
+  .step-body h4 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--white);
+    margin-bottom: 6px;
+  }
+
+  .step-body p {
+    font-size: 13px;
+    color: var(--ash);
+    line-height: 1.6;
+  }
+
+  .step-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,76,0,0.1);
+    border: 1px solid rgba(255,76,0,0.2);
+    padding: 3px 10px;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--ember);
+    font-weight: 700;
+    margin-top: 8px;
+  }
+
+  .auto-info {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .info-metric {
+    background: var(--steel);
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 28px;
+    border-left: 3px solid var(--ember);
+  }
+
+  .metric-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 56px;
+    color: var(--ember);
+    line-height: 1;
+  }
+
+  .metric-desc {
+    font-size: 14px;
+    color: var(--ash);
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+
+  /* STATS */
+  .stats-section {
+    background: var(--ember);
+    padding: 80px 60px;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .big-stat {
+    text-align: center;
+    padding: 20px;
+  }
+
+  .big-stat-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 80px;
+    color: white;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .big-stat-label {
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    font-weight: 600;
+  }
+
+  /* PRICING */
+  .pricing-section {
+    background: var(--iron);
+  }
+
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    background: rgba(255,255,255,0.04);
+    margin-top: 60px;
+  }
+
+  .price-card {
+    background: var(--forge);
+    padding: 48px 40px;
+    position: relative;
+    transition: background 0.3s;
+  }
+
+  .price-card.featured {
+    background: var(--steel);
+  }
+
+  .price-card.featured::before {
+    content: 'POPULAIRE';
+    position: absolute;
+    top: -1px;
+    right: 40px;
+    background: var(--ember);
+    color: white;
+    font-size: 10px;
+    letter-spacing: 2px;
+    font-weight: 700;
+    padding: 4px 12px;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  .price-plan {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--ash);
+    font-weight: 700;
+    margin-bottom: 20px;
+  }
+
+  .price-amount {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+
+  .price-amount .currency {
+    font-size: 24px;
+    color: var(--white);
+    font-weight: 300;
+  }
+
+  .price-amount .amount {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 72px;
+    color: var(--white);
+    line-height: 1;
+  }
+
+  .price-period {
+    font-size: 13px;
+    color: var(--ash);
+    margin-bottom: 32px;
+  }
+
+  .price-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.06);
+    margin-bottom: 32px;
+  }
+
+  .price-features {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 40px;
+  }
+
+  .price-features li {
+    font-size: 14px;
+    color: var(--ash);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .price-features li::before {
+    content: '→';
+    color: var(--ember);
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  /* FAQ */
+  .faq-section {
+    background: var(--forge);
+  }
+
+  .faq-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    margin-top: 60px;
+  }
+
+  .faq-item {
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding-bottom: 28px;
+    margin-bottom: 28px;
+    cursor: pointer;
+  }
+
+  .faq-q {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--light);
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .faq-q::after {
+    content: '+';
+    color: var(--ember);
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .faq-a {
+    font-size: 14px;
+    color: var(--ash);
+    line-height: 1.7;
+  }
+
+  /* CTA FINAL */
+  .cta-final {
+    background: var(--iron);
+    padding: 120px 60px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-final::before {
+    content: 'IRON';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(200px, 30vw, 400px);
+    color: rgba(255,76,0,0.03);
+    white-space: nowrap;
+    pointer-events: none;
+    letter-spacing: 20px;
+  }
+
+  .cta-final h2 {
+    font-size: clamp(50px, 6vw, 90px);
+    position: relative;
+  }
+
+  .cta-final p {
+    font-size: 18px;
+    color: var(--ash);
+    margin: 20px auto 48px;
+    max-width: 480px;
+    position: relative;
+  }
+
+  .cta-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    position: relative;
+  }
+
+  /* FOOTER */
+  footer {
+    background: var(--forge);
+    padding: 60px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 60px;
+  }
+
+  .footer-brand .logo {
+    font-size: 24px;
+    display: block;
+    margin-bottom: 16px;
+  }
+
+  .footer-brand p {
+    font-size: 13px;
+    color: var(--ash);
+    line-height: 1.7;
+    max-width: 260px;
+  }
+
+  .footer-col h5 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--white);
+    font-weight: 700;
+    margin-bottom: 20px;
+  }
+
+  .footer-col a {
+    display: block;
+    font-size: 13px;
+    color: var(--ash);
+    text-decoration: none;
+    margin-bottom: 10px;
+    transition: color 0.2s;
+  }
+
+  .footer-col a:hover { color: var(--ember); }
+
+  .footer-bottom {
+    background: var(--iron);
+    padding: 20px 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .footer-bottom p {
+    font-size: 12px;
+    color: var(--ash);
+  }
+
+  .footer-bottom span {
+    color: var(--ember);
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 1024px) {
+    nav, section, .hero, .stats-section, footer, .footer-bottom { padding-left: 30px; padding-right: 30px; }
+    .hero-stats { display: none; }
+    .features-grid { grid-template-columns: 1fr 1fr; }
+    .pipeline-content, .auto-grid { grid-template-columns: 1fr; }
+    .pricing-grid { grid-template-columns: 1fr; }
+    .faq-grid { grid-template-columns: 1fr; }
+    footer { grid-template-columns: 1fr 1fr; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (max-width: 640px) {
+    .features-grid { grid-template-columns: 1fr; }
+    nav ul { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">iron<span>CRM</span></div>
+  <ul>
+    <li><a href="#features">Fonctionnalités</a></li>
+    <li><a href="#pipeline">Pipeline</a></li>
+    <li><a href="#automation">Automation</a></li>
+    <li><a href="#pricing">Tarifs</a></li>
+  </ul>
+  <a href="#demo" class="nav-cta">Démo gratuite</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-line"></div>
+  <div class="hero-content">
+    <div class="hero-badge">+ de 1 500 clubs & studios</div>
+    <h1>Transformez vos <em>prospects en membres</em></h1>
+    <p class="hero-sub">ironCRM centralise tous vos prospects, <strong>automatise vos relances</strong> et booste vos taux de conversion. Conçu exclusivement pour les salles de sport.</p>
+    <div class="hero-actions">
+      <a href="#demo" class="btn-primary">Planifier une démo</a>
+      <a href="#features" class="btn-ghost">Voir les fonctionnalités →</a>
+    </div>
+  </div>
+  <div class="hero-stats">
+    <div class="stat-card">
+      <div class="stat-number">+42%</div>
+      <div class="stat-label">Taux de conversion moyen</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">2min</div>
+      <div class="stat-label">Temps de réponse prospect</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">30j</div>
+      <div class="stat-label">Mise en production</div>
+    </div>
+  </div>
+</section>
+
+<!-- LOGOS -->
+<div class="logos-strip">
+  <div class="logos-label">Compatible avec vos logiciels de gestion</div>
+  <div class="logos-track">
+    <span>Resamania</span><span>Glofox</span><span>Mindbody</span><span>ClubSpeed</span><span>PerfectGym</span><span>Virtuagym</span><span>TeamUp</span><span>Fitco</span>
+    <span>Resamania</span><span>Glofox</span><span>Mindbody</span><span>ClubSpeed</span><span>PerfectGym</span><span>Virtuagym</span><span>TeamUp</span><span>Fitco</span>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="features-header">
+    <div>
+      <div class="section-label">Fonctionnalités</div>
+      <h2>Tout ce qu'il faut pour <span>dominer</span></h2>
+    </div>
+    <p class="section-intro">Un seul outil pour capturer, qualifier, relancer et convertir chaque prospect qui montre de l'intérêt pour votre club.</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🎯</div>
+      <div class="feature-title">Capture multi-sources</div>
+      <p class="feature-desc">Formulaires web, Facebook Ads, Google Ads, Instagram — tous vos prospects arrivent automatiquement dans ironCRM, sans saisie manuelle.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-title">Séquences automatisées</div>
+      <p class="feature-desc">Déclenchement automatique d'emails, SMS et rappels au bon moment. Chaque prospect reçoit le bon message sans que vous leviez le petit doigt.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <div class="feature-title">Pipeline visuel</div>
+      <p class="feature-desc">Kanban sport-native avec colonnes personnalisables. Visualisez en un coup d'œil où en est chaque prospect dans son parcours d'achat.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📅</div>
+      <div class="feature-title">Prise de RDV intégrée</div>
+      <p class="feature-desc">Calendrier synchronisé pour planifier des visites, cours essai et appels commerciaux. Fini les allers-retours par email.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">💬</div>
+      <div class="feature-title">Messagerie unifiée</div>
+      <p class="feature-desc">SMS, email et WhatsApp depuis un seul endroit. Tout l'historique de vos échanges centralisé sur chaque fiche prospect.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📈</div>
+      <div class="feature-title">Analytics & reporting</div>
+      <p class="feature-desc">Taux de conversion par source, performance des commerciaux, revenus générés. Les KPIs qui comptent vraiment pour votre club.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PIPELINE -->
+<section class="pipeline-section" id="pipeline">
+  <div class="section-label">Pipeline CRM</div>
+  <h2>Un parcours prospect <span>adapté</span> à votre club</h2>
+  <div class="pipeline-content">
+    <div class="pipeline-visual">
+      <div class="kanban">
+        <div class="kanban-col">
+          <div class="kanban-header">Nouveaux</div>
+          <div class="kanban-card"><div class="kanban-name">Marie Laurent</div><div class="kanban-meta">Musculation • Facebook</div><div class="kanban-score">CHAUD</div></div>
+          <div class="kanban-card"><div class="kanban-name">Tom Renard</div><div class="kanban-meta">CrossFit • Google</div></div>
+          <div class="kanban-card"><div class="kanban-name">Léa Morin</div><div class="kanban-meta">Yoga • Site web</div></div>
+        </div>
+        <div class="kanban-col">
+          <div class="kanban-header">Contactés</div>
+          <div class="kanban-card"><div class="kanban-name">Paul Dubois</div><div class="kanban-meta">Fitness • Instagram</div><div class="kanban-score">RDV J+2</div></div>
+          <div class="kanban-card"><div class="kanban-name">Sarah Petit</div><div class="kanban-meta">Boxing • Parrainage</div></div>
+        </div>
+        <div class="kanban-col">
+          <div class="kanban-header">En visite</div>
+          <div class="kanban-card"><div class="kanban-name">Alex Martin</div><div class="kanban-meta">Natation • Google</div><div class="kanban-score">ESSAI</div></div>
+          <div class="kanban-card"><div class="kanban-name">Camille Roy</div><div class="kanban-meta">EMS • Facebook</div></div>
+        </div>
+        <div class="kanban-col">
+          <div class="kanban-header">Convertis ✓</div>
+          <div class="kanban-card"><div class="kanban-name">Julie Bernard</div><div class="kanban-meta">Mensuel • 49€/mois</div></div>
+          <div class="kanban-card"><div class="kanban-name">Marc Simon</div><div class="kanban-meta">Annuel • 399€</div></div>
+          <div class="kanban-card"><div class="kanban-name">Nina Blanc</div><div class="kanban-meta">Annuel • 399€</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="pipeline-points">
+      <div class="pipeline-point">
+        <div class="point-num">01</div>
+        <div class="point-content">
+          <h3>Qualification automatique</h3>
+          <p>Chaque prospect entrant est scoré automatiquement selon sa source, ses interactions et son profil. Vos commerciaux savent immédiatement sur qui se concentrer.</p>
+        </div>
+      </div>
+      <div class="pipeline-point">
+        <div class="point-num">02</div>
+        <div class="point-content">
+          <h3>Fiche prospect complète</h3>
+          <p>Objectifs fitness, historique des échanges, notes de visite, essais réalisés — tout est là, accessible en un clic avant chaque contact.</p>
+        </div>
+      </div>
+      <div class="pipeline-point">
+        <div class="point-num">03</div>
+        <div class="point-content">
+          <h3>Rappels intelligents</h3>
+          <p>ironCRM vous alerte au moment parfait pour relancer. Plus jamais un prospect ne tombe dans l'oubli faute d'un suivi au bon moment.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AUTOMATIONS -->
+<section class="auto-section" id="automation">
+  <div class="section-label">Automation</div>
+  <h2>Automatisez, <span>concentrez-vous</span> sur la vente</h2>
+  <div class="auto-grid">
+    <div class="auto-flow">
+      <div class="auto-step">
+        <div class="step-dot">1</div>
+        <div class="step-body">
+          <h4>Prospect capturé</h4>
+          <p>Un formulaire est soumis, une pub Facebook cliquée — ironCRM l'intègre instantanément.</p>
+          <span class="step-tag">⚡ Instantané</span>
+        </div>
+      </div>
+      <div class="auto-step">
+        <div class="step-dot">2</div>
+        <div class="step-body">
+          <h4>Email de bienvenue</h4>
+          <p>Message personnalisé envoyé en moins de 5 minutes. Votre prospect sait qu'il est entre de bonnes mains.</p>
+          <span class="step-tag">📧 Automatique</span>
+        </div>
+      </div>
+      <div class="auto-step">
+        <div class="step-dot">3</div>
+        <div class="step-body">
+          <h4>SMS de rappel J+2</h4>
+          <p>Si aucune réponse, un SMS de relance est envoyé avec un lien de prise de rendez-vous direct.</p>
+          <span class="step-tag">💬 SMS / WhatsApp</span>
+        </div>
+      </div>
+      <div class="auto-step">
+        <div class="step-dot">4</div>
+        <div class="step-body">
+          <h4>Relance commerciale J+5</h4>
+          <p>Une notification pousse vers votre commercial avec tout le contexte pour une relance personnalisée et percutante.</p>
+          <span class="step-tag">🔔 Notification équipe</span>
+        </div>
+      </div>
+    </div>
+    <div class="auto-info">
+      <div class="info-metric">
+        <div class="metric-value">73%</div>
+        <div class="metric-desc">des prospects qui reçoivent une réponse en moins de 5 minutes finissent par venir visiter le club</div>
+      </div>
+      <div class="info-metric">
+        <div class="metric-value">×3</div>
+        <div class="metric-desc">c'est le multiplicateur de conversion observé chez nos clients après activation des séquences automatisées</div>
+      </div>
+      <div class="info-metric">
+        <div class="metric-value">8h</div>
+        <div class="metric-desc">de temps gagné chaque semaine par commercial grâce aux tâches automatisées</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS BAR -->
+<div class="stats-section">
+  <div class="stats-grid">
+    <div class="big-stat">
+      <div class="big-stat-number">1500+</div>
+      <div class="big-stat-label">Clubs & studios</div>
+    </div>
+    <div class="big-stat">
+      <div class="big-stat-number">+42%</div>
+      <div class="big-stat-label">Taux de conversion</div>
+    </div>
+    <div class="big-stat">
+      <div class="big-stat-number">2M+</div>
+      <div class="big-stat-label">Prospects traités</div>
+    </div>
+    <div class="big-stat">
+      <div class="big-stat-number">30j</div>
+      <div class="big-stat-label">Onboarding garanti</div>
+    </div>
+  </div>
+</div>
+
+<!-- PRICING -->
+<section class="pricing-section" id="pricing">
+  <div style="text-align:center; margin-bottom: 0;">
+    <div class="section-label" style="justify-content:center;">Tarifs</div>
+    <h2>Des prix pour <span>toutes les tailles</span></h2>
+    <p class="section-intro" style="margin: 0 auto;">Sans engagement, sans frais cachés. Testez ironCRM 30 jours gratuitement.</p>
+  </div>
+  <div class="pricing-grid">
+    <div class="price-card">
+      <div class="price-plan">Starter</div>
+      <div class="price-amount"><span class="currency">€</span><span class="amount">99</span></div>
+      <div class="price-period">HT / mois par club</div>
+      <div class="price-divider"></div>
+      <ul class="price-features">
+        <li>Jusqu'à 200 prospects/mois</li>
+        <li>Pipeline visuel</li>
+        <li>Email automation</li>
+        <li>1 utilisateur commercial</li>
+        <li>Intégration 1 logiciel</li>
+        <li>Support email</li>
+      </ul>
+      <a href="#demo" class="btn-primary" style="display:block;text-align:center;">Commencer</a>
+    </div>
+    <div class="price-card featured">
+      <div class="price-plan">Pro</div>
+      <div class="price-amount"><span class="currency">€</span><span class="amount">149</span></div>
+      <div class="price-period">HT / mois par club</div>
+      <div class="price-divider"></div>
+      <ul class="price-features">
+        <li>Prospects illimités</li>
+        <li>Pipeline + Kanban avancé</li>
+        <li>Email, SMS & WhatsApp</li>
+        <li>5 utilisateurs</li>
+        <li>Intégrations illimitées</li>
+        <li>Analytics & reporting</li>
+        <li>Support prioritaire</li>
+      </ul>
+      <a href="#demo" class="btn-primary" style="display:block;text-align:center;">Commencer</a>
+    </div>
+    <div class="price-card">
+      <div class="price-plan">Réseau</div>
+      <div class="price-amount"><span class="currency">€</span><span class="amount">299</span></div>
+      <div class="price-period">HT / mois — multi-clubs</div>
+      <div class="price-divider"></div>
+      <ul class="price-features">
+        <li>Clubs illimités</li>
+        <li>Dashboard réseau centralisé</li>
+        <li>Tous les canaux inclus</li>
+        <li>Utilisateurs illimités</li>
+        <li>API & webhooks</li>
+        <li>Account manager dédié</li>
+        <li>Onboarding sur site</li>
+      </ul>
+      <a href="#demo" class="btn-primary" style="display:block;text-align:center;">Contacter l'équipe</a>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq-section" id="faq">
+  <div class="section-label">FAQ</div>
+  <h2>Questions <span>fréquentes</span></h2>
+  <div class="faq-grid">
+    <div>
+      <div class="faq-item">
+        <div class="faq-q">Fonctionne-t-il avec mon logiciel de gestion actuel ?</div>
+        <div class="faq-a">ironCRM s'intègre avec les principaux ERP du marché (Resamania, Glofox, Mindbody, Virtuagym…). La synchronisation est bidirectionnelle et en temps réel — vos données restent toujours à jour des deux côtés.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Combien de temps pour être opérationnel ?</div>
+        <div class="faq-a">Nous garantissons une mise en production complète en 30 jours, intégration, formation et premier scénario d'automation inclus. La plupart de nos clients voient leurs premiers résultats dès la 2ème semaine.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Puis-je personnaliser les scénarios d'automation ?</div>
+        <div class="faq-a">Complètement. ironCRM propose des templates prêts à l'emploi pour les salles de sport, mais chaque séquence est entièrement personnalisable : délais, messages, canaux, conditions de déclenchement.</div>
+      </div>
+    </div>
+    <div>
+      <div class="faq-item">
+        <div class="faq-q">Le SMS est-il inclus dans l'abonnement ?</div>
+        <div class="faq-a">Les plans Pro et Réseau incluent un crédit SMS mensuel. Au-delà, des packs SMS additionnels sont disponibles à tarif préférentiel. Pas de surprises en fin de mois.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Mes données sont-elles sécurisées ?</div>
+        <div class="faq-a">ironCRM est 100% RGPD conforme, hébergé en France (données sur serveurs OVH). Chiffrement TLS en transit, AES-256 au repos. Vos données prospects vous appartiennent et peuvent être exportées à tout moment.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Y a-t-il une période d'engagement ?</div>
+        <div class="faq-a">Aucun engagement minimum. Vous testez gratuitement pendant 30 jours, puis continuez mois par mois. Résiliation en 1 clic, vos données exportées dans les 48h.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-final" id="demo">
+  <h2>Ne laissez plus aucun <span>prospect</span> vous échapper</h2>
+  <p>Rejoignez 1 500+ clubs qui convertissent plus avec ironCRM. Essai gratuit 30 jours, sans carte bancaire.</p>
+  <div class="cta-actions">
+    <a href="#" class="btn-primary">Planifier une démo gratuite</a>
+    <a href="#" class="btn-ghost">Se connecter →</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand">
+    <span class="logo">iron<span>CRM</span></span>
+    <p>Le CRM conçu pour les salles de sport. Capturez, convertissez, fidélisez — tout depuis un seul outil.</p>
+  </div>
+  <div class="footer-col">
+    <h5>Solutions</h5>
+    <a href="#">Pipeline prospect</a>
+    <a href="#">Automation</a>
+    <a href="#">Analytics</a>
+    <a href="#">Messagerie</a>
+    <a href="#">Intégrations</a>
+  </div>
+  <div class="footer-col">
+    <h5>Ressources</h5>
+    <a href="#">Documentation</a>
+    <a href="#">Blog</a>
+    <a href="#">Cas clients</a>
+    <a href="#">Webinaires</a>
+    <a href="#">Support</a>
+  </div>
+  <div class="footer-col">
+    <h5>Légal</h5>
+    <a href="#">Mentions légales</a>
+    <a href="#">Confidentialité</a>
+    <a href="#">CGU</a>
+    <a href="#">RGPD</a>
+    <a href="#">contact@ironcrm.fr</a>
+  </div>
+</footer>
+<div class="footer-bottom">
+  <p>© 2025 <span>ironCRM</span>. Tous droits réservés.</p>
+  <p>Fait avec 🔥 pour les salles de sport</p>
+</div>
+
+</body>
+</html>
